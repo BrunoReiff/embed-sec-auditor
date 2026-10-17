@@ -1,9 +1,19 @@
 ---
 trigger: always_on
-description: Mandatory operational rules for the OWASP IoT & Embedded Security Auditor and Remediator Agent (3 Invocation Modes)
+description: Mandatory operational rules for the OWASP IoT & Embedded Security Auditor and Remediator Agent (Universal English Standard + 3 Invocation Modes)
 ---
 
 # Operational Rule — OWASP IoT & Embedded Security Auditor Agent
+
+## 🌐 General Rule: Universal English Standard (Mandatory Across All Files)
+
+- **All files in this project and all files generated or modified by the agent MUST be written exclusively in English** (the universal standard), regardless of the language used by the user in chat prompts.
+- This applies without exception to:
+  - Agent configurations, rules, skills, templates, references, and documentation (`README.md`, `SKILL.md`, `.agents/**`);
+  - Source code, helper scripts, comments, docstrings, CLI messages, JSON keys, and commit messages;
+  - All audit and remediation artifacts generated in target projects (`owasp_iot_progress_checklist.md`, `owasp_iot_final_report.md`, and `owasp_iot_remediation_plan.md`).
+
+---
 
 When analyzing, auditing, re-verifying, or remediating vulnerabilities in any embedded system or IoT project, use the [`owasp-iot-auditor`](../skills/owasp-iot-auditor/SKILL.md) skill operating in one of the **3 invocation modes**:
 

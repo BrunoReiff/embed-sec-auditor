@@ -14,6 +14,9 @@ description: >-
 
 # OWASP IoT & Embedded Security Auditor Skill
 
+> [!IMPORTANT]
+> **Universal English Standard (General Rule):** All files in this repository and all artifacts generated or updated by this skill (`owasp_iot_progress_checklist.md`, `owasp_iot_final_report.md`, `owasp_iot_remediation_plan.md`, source code comments, scripts, and documentation) **MUST be written and maintained strictly in English**, regardless of the language used by the user in the chat prompt.
+
 This Skill instructs the agent to operate in **three complementary operational modes** for security auditing, re-verification, and remediation across embedded systems and IoT ecosystems, based on the unified OWASP methodology described in this Skill (**Section 6.1** = scope classification in **Step 2**; **Section 6.2** = the 6 testing modules in **Step 4**) and the official OWASP repositories used as upstream sources in `IOT_OWASP/` (`embeddedappsec`, `owasp-fstm`, and `owasp-istg`, included as *git submodules*):
 
 | Invocation Mode | When to Use | How It Works / How the User Invokes It |
