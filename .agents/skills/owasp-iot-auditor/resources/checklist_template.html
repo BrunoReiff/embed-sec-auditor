@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OWASP IoT &amp; Embedded Security Audit Checklist — &lt;PROJECT_NAME_OR_PATH&gt;</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #26354d;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .topbar-brand { font-weight: 700; font-size: 1.05rem; }
+    .nav-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .nav-tab {
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+    .nav-tab:hover { background: var(--surface-hover); text-decoration: none; }
+    .nav-tab.active {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+    }
+    .container { max-width: 1380px; margin: 0 auto; padding: 1.75rem 2rem 4rem; }
+    section, .state-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    h1, h2, h3, h4 { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin-bottom: 1.25rem; }
+    th, td { border: 1px solid var(--border); padding: 0.55rem 0.75rem; text-align: left; vertical-align: top; }
+    th { background: rgba(15, 23, 42, 0.6); color: var(--muted); }
+    tr.group-row td { background: rgba(56, 189, 248, 0.08); font-weight: 700; color: var(--accent); }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: rgba(15, 23, 42, 0.75);
+      padding: 0.12rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Unified Single-Tab Navigation Bar -->
+  <nav class="topbar">
+    <div class="topbar-brand">🧭 OWASP IoT Audit State-Tracking Checklist</div>
+    <div class="nav-tabs">
+      <a class="nav-tab" href="./owasp_iot_final_report.html">📊 Final Audit Report</a>
+      <a class="nav-tab" href="./owasp_iot_remediation_plan.html">🛠️ Remediation Plan (Action Tracker)</a>
+      <a class="nav-tab active" href="./owasp_iot_progress_checklist.html">🧭 Progress Checklist</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- 🧭 Current Audit State (Agent Navigation Guide) -->
+    <div class="state-card">
+      <h1>OWASP IoT &amp; Embedded Security Audit Checklist (Agent State Tracker)</h1>
+      <p><strong>Purpose:</strong> Persistent state-tracking guide showing where the agent stopped and where it must go next, unifying <code>IOT_OWASP/owasp-istg/checklists/checklist.md</code> (Part A) with <code>IOT_OWASP/embeddedappsec</code> (Part B). Part C (<code>IOT_OWASP/owasp-fstm</code>) is optional and executed only if explicitly requested by the user.</p>
+      <ul>
+        <li><strong>Audited Project:</strong> <code>&lt;PROJECT_NAME_OR_PATH&gt;</code></li>
+        <li><strong>Last Updated:</strong> <code>&lt;YYYY-MM-DD HH:MM&gt;</code></li>
+        <li><strong>Current Workflow Phase:</strong> <code>[ ] Step 1: Discovery | [ ] Step 2: Classification 6.1 | [ ] Step 3: Checklist | [ ] Step 4: Execution 6.2 | [ ] Step 5: Final Report</code></li>
+        <li><strong>Where the Agent Stopped (Last Completed Module / Test ID):</strong> <code>&lt;Ex.: Module 2 completed up to ISTG-FW-CRYPT-001&gt;</code></li>
+        <li><strong>Where the Agent Must Go Next (Next Pending Module / Test ID):</strong> <code>&lt;Ex.: Start Module 3 — Build, Bootloader &amp; Binary Hardening (ISTG-FW-INFO-004)&gt;</code></li>
+      </ul>
+
+      <h3>Execution Progress by Module (Strict Section 6.2 Order — Parts A &amp; B Mandatory)</h3>
+      <table>
+        <thead>
+          <tr><th>Order</th><th>Section 6.2 Module</th><th>Module Status</th><th>Total Items</th><th>Completed</th><th>Pending</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>1st</strong></td><td><strong>Module 1 — Embedded SAST &amp; Memory Quality</strong></td><td><code>PENDING</code></td><td>15</td><td>0</td><td>15</td></tr>
+          <tr><td><strong>2nd</strong></td><td><strong>Module 2 — Secrets, Identity &amp; Cryptography (<code>SCRT</code>, <code>CRYPT</code>, <code>AUTHZ</code>)</strong></td><td><code>PENDING</code></td><td>29</td><td>0</td><td>29</td></tr>
+          <tr><td><strong>3rd</strong></td><td><strong>Module 3 — Build, Bootloader &amp; Binary Hardening (<code>INFO-004</code>, <code>CONF-002</code>)</strong></td><td><code>PENDING</code></td><td>34</td><td>0</td><td>34</td></tr>
+          <tr><td><strong>4th</strong></td><td><strong>Module 4 — Firmware Update Lifecycle (<code>ISTG-FW[UPDT]</code>)</strong></td><td><code>PENDING</code></td><td>7</td><td>0</td><td>7</td></tr>
+          <tr><td><strong>5th</strong></td><td><strong>Module 5 — Data Exchange Services &amp; Business Logic (<code>ISTG-DES</code>)</strong></td><td><code>PENDING</code></td><td>11</td><td>0</td><td>11</td></tr>
+          <tr><td><strong>6th</strong></td><td><strong>Module 6 — SBOM &amp; Third-Party Dependencies (<code>CONF-001</code>)</strong></td><td><code>PENDING</code></td><td>7</td><td>0</td><td>7</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Project Scope Mapping (Section 6.1)</h3>
+      <table>
+        <thead>
+          <tr><th>Section 6.1 Category</th><th>Detected in Project?</th><th>Found Artifacts / Technologies</th><th>Activated Components</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>1. Firmware / Embedded Code</strong></td><td><code>[ ] Yes / [ ] No</code></td><td></td><td><code>ISTG-FW</code>, <code>ISTG-MEM</code>, <code>ISTG-PROC</code>, <code>ISTG-INT[UART/I2C]</code>, <code>Embedded AppSec</code></td></tr>
+          <tr><td><strong>2. Build System / Firmware Image</strong></td><td><code>[ ] Yes / [ ] No</code></td><td></td><td><code>ISTG-FW-INFO-004</code>, <code>ISTG-FW-CONF-002</code>, <code>ISTG-FW[INST]-CRYPT-001</code>, <code>ISTG-FW-CONF-001</code></td></tr>
+          <tr><td><strong>3. Backend / Broker / Data Services</strong></td><td><code>[ ] Yes / [ ] No</code></td><td></td><td><code>ISTG-DES</code></td></tr>
+          <tr><td><strong>4. Web App / Dashboard / Mobile / Interfaces</strong></td><td><code>[ ] Yes / [ ] No</code></td><td></td><td><code>ISTG-UI</code>, <code>ISTG-WRLS</code>, <code>ISTG-PHY</code></td></tr>
+        </tbody>
+      </table>
+      <p><strong>Status Values:</strong> <code>PASS</code> | <code>PARTIAL</code> | <code>FAIL</code> | <code>N/A</code> | <code>PENDING</code> | <code>OPTIONAL</code>. Always record exact <code>File(s)</code> and <code>Line(s)</code> in the <em>Notes / Evidence</em> column.</p>
+    </div>
+
+    <!-- PART A: OFFICIAL OWASP ISTG CHECKLIST (86 TEST CASES) -->
+    <section id="part-a">
+      <h2>Part A: Official OWASP ISTG Checklist (86 Test Cases — <code>IOT_OWASP/owasp-istg/checklists/checklist.md</code>)</h2>
+
+      <h3>1. Processing Units (<code>ISTG-PROC</code>)</h3>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-PROC-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-PROC-AUTHZ-001</code></td><td>Unauthorized Access to the Processing Unit</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-PROC-AUTHZ-002</code></td><td>Privilege Escalation</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-PROC-LOGIC — Business Logic</td></tr>
+          <tr><td><code>ISTG-PROC-LOGIC-001</code></td><td>Insecure Implementation of Instructions</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-PROC-SIDEC — Side-Channel Attacks</td></tr>
+          <tr><td><code>ISTG-PROC-SIDEC-001</code></td><td>Insufficient Protection Against Side-Channel Attacks</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h3>2. Memory (<code>ISTG-MEM</code>)</h3>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-MEM-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-MEM-INFO-001</code></td><td>Disclosure of Source Code and Binaries</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-MEM-INFO-002</code></td><td>Disclosure of Implementation Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-MEM-INFO-003</code></td><td>Disclosure of Ecosystem Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-MEM-INFO-004</code></td><td>Disclosure of User Data</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-MEM-INFO-005</code></td><td>Insecure Binary Compilation Options</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-MEM-SCRT — Secrets</td></tr>
+          <tr><td><code>ISTG-MEM-SCRT-001</code></td><td>Unencrypted Storage of Secrets</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-MEM-CRYPT — Cryptography</td></tr>
+          <tr><td><code>ISTG-MEM-CRYPT-001</code></td><td>Usage of Weak Cryptographic Algorithms</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h3>3. Firmware (<code>ISTG-FW</code>)</h3>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-FW-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-FW-INFO-001</code></td><td>Disclosure of Source Code and Binaries</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW-INFO-002</code></td><td>Disclosure of Implementation Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW-INFO-003</code></td><td>Disclosure of Ecosystem Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW-INFO-004</code></td><td>Insecure Binary Compilation Options</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-FW-CONF — Configuration and Patch Management</td></tr>
+          <tr><td><code>ISTG-FW-CONF-001</code></td><td>Usage of Outdated Software</td><td>Module 6</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW-CONF-002</code></td><td>Presence of Unnecessary Software and Functionalities</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-FW-SCRT — Secrets</td></tr>
+          <tr><td><code>ISTG-FW-SCRT-001</code></td><td>Secrets Stored in Public Storage</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW-SCRT-002</code></td><td>Unencrypted Storage of Secrets</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW-SCRT-003</code></td><td>Usage of Hardcoded Secrets</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-FW-CRYPT — Cryptography</td></tr>
+          <tr><td><code>ISTG-FW-CRYPT-001</code></td><td>Usage of Weak Cryptographic Algorithms</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h4>3.1. Installed Firmware (<code>ISTG-FW[INST]</code>)</h4>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-FW[INST]-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-FW[INST]-AUTHZ-001</code></td><td>Unauthorized Access to the Firmware</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW[INST]-AUTHZ-002</code></td><td>Privilege Escalation</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-FW[INST]-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-FW[INST]-INFO-001</code></td><td>Disclosure of User Data</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-FW[INST]-CRYPT — Cryptography</td></tr>
+          <tr><td><code>ISTG-FW[INST]-CRYPT-001</code></td><td>Insufficient Verification of the Bootloader Signature</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h4>3.2. Firmware Update Mechanism (<code>ISTG-FW[UPDT]</code>)</h4>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-FW[UPDT]-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-FW[UPDT]-AUTHZ-001</code></td><td>Unauthorized Firmware Update</td><td>Module 4</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-FW[UPDT]-CRYPT — Cryptography</td></tr>
+          <tr><td><code>ISTG-FW[UPDT]-CRYPT-001</code></td><td>Insufficient Firmware Update Signature</td><td>Module 4</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW[UPDT]-CRYPT-002</code></td><td>Insufficient Firmware Update Encryption</td><td>Module 4</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW[UPDT]-CRYPT-003</code></td><td>Insecure Transmission of the Firmware Update</td><td>Module 4</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-FW[UPDT]-CRYPT-004</code></td><td>Insufficient Verification of the Firmware Update Signature</td><td>Module 4</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-FW[UPDT]-LOGIC — Business Logic</td></tr>
+          <tr><td><code>ISTG-FW[UPDT]-LOGIC-001</code></td><td>Insufficient Rollback Protection</td><td>Module 4</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h3>4. Data Exchange Services (<code>ISTG-DES</code>)</h3>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-DES-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-DES-AUTHZ-001</code></td><td>Unauthorized Access to the Data Exchange Service</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-DES-AUTHZ-002</code></td><td>Privilege Escalation</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-DES-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-DES-INFO-001</code></td><td>Disclosure of Implementation Details</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-DES-INFO-002</code></td><td>Disclosure of Ecosystem Details</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-DES-INFO-003</code></td><td>Disclosure of User Data</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-DES-CONF — Configuration and Patch Management</td></tr>
+          <tr><td><code>ISTG-DES-CONF-001</code></td><td>Usage of Outdated Software</td><td>Module 6</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-DES-CONF-002</code></td><td>Presence of Unnecessary Software and Functionalities</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-DES-SCRT — Secrets</td></tr>
+          <tr><td><code>ISTG-DES-SCRT-001</code></td><td>Access to Confidential Data</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-DES-CRYPT — Cryptography</td></tr>
+          <tr><td><code>ISTG-DES-CRYPT-001</code></td><td>Usage of Weak Cryptographic Algorithms</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-DES-LOGIC — Business Logic</td></tr>
+          <tr><td><code>ISTG-DES-LOGIC-001</code></td><td>Circumvention of the Intended Business Logic</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-DES-INPV — Input Validation</td></tr>
+          <tr><td><code>ISTG-DES-INPV-001</code></td><td>Insufficient Input Validation</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-DES-INPV-002</code></td><td>Code or Command Injection</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h3>5. Internal Interfaces (<code>ISTG-INT</code>)</h3>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-INT-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-INT-AUTHZ-001</code></td><td>Unauthorized Access to the Interface</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-INT-AUTHZ-002</code></td><td>Privilege Escalation</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-INT-INFO-001</code></td><td>Disclosure of Implementation Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-INT-INFO-002</code></td><td>Disclosure of Ecosystem Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-INT-INFO-003</code></td><td>Disclosure of User Data</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT-CONF — Configuration and Patch Management</td></tr>
+          <tr><td><code>ISTG-INT-CONF-001</code></td><td>Usage of Outdated Software</td><td>Module 6</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-INT-CONF-002</code></td><td>Presence of Unnecessary Software and Functionalities</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT-SCRT — Secrets</td></tr>
+          <tr><td><code>ISTG-INT-SCRT-001</code></td><td>Access to Confidential Data</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT-CRYPT — Cryptography</td></tr>
+          <tr><td><code>ISTG-INT-CRYPT-001</code></td><td>Usage of Weak Cryptographic Algorithms</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT-LOGIC — Business Logic</td></tr>
+          <tr><td><code>ISTG-INT-LOGIC-001</code></td><td>Circumvention of the Intended Business Logic</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT-INPV — Input Validation</td></tr>
+          <tr><td><code>ISTG-INT-INPV-001</code></td><td>Insufficient Input Validation</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-INT-INPV-002</code></td><td>Code or Command Injection</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h4>5.1. Inter-Integrated Circuit (<code>ISTG-INT[I2C]</code>)</h4>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-INT[I2C]-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-INT[I2C]-AUTHZ-001</code></td><td>Bus Interaction with Unauthorized Devices</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT[I2C]-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-INT[I2C]-INFO-001</code></td><td>Slave Enumeration</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-INT[I2C]-INFO-002</code></td><td>Communication Sniffing</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-INT[I2C]-INFO-003</code></td><td>EEPROM/Memory Extraction</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT[I2C]-INPV — Input Validation</td></tr>
+          <tr><td><code>ISTG-INT[I2C]-INPV-001</code></td><td>Insufficient Handling of Invalid Data</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h4>5.2. Universal Asynchronous Receiver-Transmitter (<code>ISTG-INT[UART]</code>)</h4>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-INT[UART]-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-INT[UART]-AUTHZ-001</code></td><td>Unauthenticated Access to Serial Console</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-INT[UART]-AUTHZ-002</code></td><td>Bootloader Interrupt via Serial Console</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT[UART]-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-INT[UART]-INFO-001</code></td><td>UART Interface and Baud Rate Identification</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-INT[UART]-INFO-002</code></td><td>Disclosure of Sensitive Data in Serial Output</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-INT[UART]-INPV — Input Validation</td></tr>
+          <tr><td><code>ISTG-INT[UART]-INPV-001</code></td><td>Command Injection via Serial Interface</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h3>6. Physical Interfaces (<code>ISTG-PHY</code>)</h3>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-PHY-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-PHY-AUTHZ-001</code></td><td>Unauthorized Access to the Interface</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-PHY-AUTHZ-002</code></td><td>Privilege Escalation</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-PHY-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-PHY-INFO-001</code></td><td>Disclosure of Implementation Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-PHY-INFO-002</code></td><td>Disclosure of Ecosystem Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-PHY-INFO-003</code></td><td>Disclosure of User Data</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-PHY-CONF — Configuration and Patch Management</td></tr>
+          <tr><td><code>ISTG-PHY-CONF-001</code></td><td>Usage of Outdated Software</td><td>Module 6</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-PHY-CONF-002</code></td><td>Presence of Unnecessary Software and Functionalities</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-PHY-SCRT — Secrets</td></tr>
+          <tr><td><code>ISTG-PHY-SCRT-001</code></td><td>Access to Confidential Data</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-PHY-CRYPT — Cryptography</td></tr>
+          <tr><td><code>ISTG-PHY-CRYPT-001</code></td><td>Usage of Weak Cryptographic Algorithms</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-PHY-LOGIC — Business Logic</td></tr>
+          <tr><td><code>ISTG-PHY-LOGIC-001</code></td><td>Circumvention of the Intended Business Logic</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-PHY-INPV — Input Validation</td></tr>
+          <tr><td><code>ISTG-PHY-INPV-001</code></td><td>Insufficient Input Validation</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-PHY-INPV-002</code></td><td>Code or Command Injection</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h3>7. Wireless Interfaces (<code>ISTG-WRLS</code>)</h3>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-WRLS-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-WRLS-AUTHZ-001</code></td><td>Unauthorized Access to the Interface</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-WRLS-AUTHZ-002</code></td><td>Privilege Escalation</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-WRLS-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-WRLS-INFO-001</code></td><td>Disclosure of Implementation Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-WRLS-INFO-002</code></td><td>Disclosure of Ecosystem Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-WRLS-INFO-003</code></td><td>Disclosure of User Data</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-WRLS-CONF — Configuration and Patch Management</td></tr>
+          <tr><td><code>ISTG-WRLS-CONF-001</code></td><td>Usage of Outdated Software</td><td>Module 6</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-WRLS-CONF-002</code></td><td>Presence of Unnecessary Software and Functionalities</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-WRLS-SCRT — Secrets</td></tr>
+          <tr><td><code>ISTG-WRLS-SCRT-001</code></td><td>Access to Confidential Data</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-WRLS-CRYPT — Cryptography</td></tr>
+          <tr><td><code>ISTG-WRLS-CRYPT-001</code></td><td>Usage of Weak Cryptographic Algorithms</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-WRLS-LOGIC — Business Logic</td></tr>
+          <tr><td><code>ISTG-WRLS-LOGIC-001</code></td><td>Circumvention of the Intended Business Logic</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-WRLS-INPV — Input Validation</td></tr>
+          <tr><td><code>ISTG-WRLS-INPV-001</code></td><td>Insufficient Input Validation</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-WRLS-INPV-002</code></td><td>Code or Command Injection</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h3>8. User Interfaces (<code>ISTG-UI</code>)</h3>
+      <table>
+        <thead><tr><th>Test ID</th><th>Test Name</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="5">ISTG-UI-AUTHZ — Authorization</td></tr>
+          <tr><td><code>ISTG-UI-AUTHZ-001</code></td><td>Unauthorized Access to the Interface</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-UI-AUTHZ-002</code></td><td>Privilege Escalation</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-UI-INFO — Information Gathering</td></tr>
+          <tr><td><code>ISTG-UI-INFO-001</code></td><td>Disclosure of Implementation Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-UI-INFO-002</code></td><td>Disclosure of Ecosystem Details</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-UI-INFO-003</code></td><td>Disclosure of User Data</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-UI-CONF — Configuration and Patch Management</td></tr>
+          <tr><td><code>ISTG-UI-CONF-001</code></td><td>Usage of Outdated Software</td><td>Module 6</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-UI-CONF-002</code></td><td>Presence of Unnecessary Software and Functionalities</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-UI-SCRT — Secrets</td></tr>
+          <tr><td><code>ISTG-UI-SCRT-001</code></td><td>Access to Confidential Data</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-UI-CRYPT — Cryptography</td></tr>
+          <tr><td><code>ISTG-UI-CRYPT-001</code></td><td>Usage of Weak Cryptographic Algorithms</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-UI-LOGIC — Business Logic</td></tr>
+          <tr><td><code>ISTG-UI-LOGIC-001</code></td><td>Circumvention of the Intended Business Logic</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+          <tr class="group-row"><td colspan="5">ISTG-UI-INPV — Input Validation</td></tr>
+          <tr><td><code>ISTG-UI-INPV-001</code></td><td>Insufficient Input Validation</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>ISTG-UI-INPV-002</code></td><td>Code or Command Injection</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- PART B: OWASP EMBEDDED APPLICATION SECURITY DOMAINS -->
+    <section id="part-b">
+      <h2>Part B: OWASP Embedded Application Security Domains (<code>IOT_OWASP/embeddedappsec</code>)</h2>
+      <table>
+        <thead><tr><th>Domain ID</th><th>Standard Topic (<code>embeddedappsec</code>)</th><th>Module 6.2</th><th>Status</th><th>Notes / Evidence (File(s) &amp; Line(s))</th></tr></thead>
+        <tbody>
+          <tr><td><code>EMB-APPSEC-01</code></td><td>Buffer and Stack Overflow Protection (<code>1_buffer_and_stack_overflow_protection.md</code>)</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-02</code></td><td>Injection Prevention (<code>2_injection_prevention.md</code>)</td><td>Module 1</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-03</code></td><td>Firmware Updates and Cryptographic Signatures (<code>3_firmware_updates...md</code>)</td><td>Module 4</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-04</code></td><td>Securing Sensitive Information (<code>4_securing_sensitive_information.md</code>)</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-05</code></td><td>Identity Management (<code>5identity_management.md</code>)</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-06</code></td><td>Embedded Framework &amp; C-Based Toolchain Hardening (<code>6_embedded_framework...md</code>)</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-07</code></td><td>Usage of Debugging Code and Interfaces (<code>7_usage_of_debugging_code...md</code>)</td><td>Module 3</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-08</code></td><td>Transport Layer Security (<code>8_transport_layer_security.md</code>)</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-09</code></td><td>Usage of Data Collection and Storage - Privacy (<code>9_usage_of_data_collection...md</code>)</td><td>Module 2</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-10</code></td><td>Third Party Code and Components / SBOM (<code>10_third_party_code_and_components.md</code>)</td><td>Module 6</td><td><code>PENDING</code></td><td></td></tr>
+          <tr><td><code>EMB-APPSEC-11</code></td><td>Threat Modeling — DFD, STRIDE &amp; DREAD (<code>threat-model.md</code>)</td><td>Module 5</td><td><code>PENDING</code></td><td></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- PART C: OPTIONAL OWASP FSTM STAGES -->
+    <section id="part-c">
+      <h2>Part C (OPTIONAL — Only if Requested by User): OWASP FSTM Stages (<code>IOT_OWASP/owasp-fstm</code>)</h2>
+      <p><strong>Note for the Agent:</strong> Keep the items below as <code>OPTIONAL</code> and only execute them if the user explicitly asks for the FSTM stages.</p>
+      <table>
+        <thead><tr><th>Stage ID</th><th>FSTM Stage (<code>owasp-fstm/README.md</code>)</th><th>Module 6.2</th><th>ISVS Level</th><th>Status</th><th>Notes / Evidence</th></tr></thead>
+        <tbody>
+          <tr><td><code>FSTM-STAGE-01</code></td><td>Stage 1: Information Gathering and Reconnaissance</td><td>Module 3</td><td>L1</td><td><code>OPTIONAL</code></td><td>Execute only upon explicit user request</td></tr>
+          <tr><td><code>FSTM-STAGE-02</code></td><td>Stage 2: Obtaining Firmware</td><td>Module 3</td><td>L1</td><td><code>OPTIONAL</code></td><td>Execute only upon explicit user request</td></tr>
+          <tr><td><code>FSTM-STAGE-03</code></td><td>Stage 3: Analyzing Firmware (Headers, Partition, Entropy)</td><td>Module 3</td><td>L1</td><td><code>OPTIONAL</code></td><td>Execute only upon explicit user request</td></tr>
+          <tr><td><code>FSTM-STAGE-04</code></td><td>Stage 4: Extracting the Filesystem</td><td>Module 3</td><td>L1</td><td><code>OPTIONAL</code></td><td>Execute only upon explicit user request</td></tr>
+          <tr><td><code>FSTM-STAGE-05</code></td><td>Stage 5: Analyzing Filesystem Contents, SAST, Checksec &amp; SBOM</td><td>Modules 1, 2, 3, 6</td><td>L1</td><td><code>OPTIONAL</code></td><td>Execute only upon explicit user request</td></tr>
+          <tr><td><code>FSTM-STAGE-06</code></td><td>Stage 6: Emulating Firmware (User-mode / Full-system)</td><td>Module 5</td><td>L2</td><td><code>OPTIONAL</code></td><td>Execute only upon explicit user request</td></tr>
+          <tr><td><code>FSTM-STAGE-07</code></td><td>Stage 7: Dynamic Analysis (Web UI, APIs, Bootloader, OTA)</td><td>Modules 4, 5</td><td>L2</td><td><code>OPTIONAL</code></td><td>Execute only upon explicit user request</td></tr>
+          <tr><td><code>FSTM-STAGE-08</code></td><td>Stage 8: Runtime Analysis (Debugging, Instrumentation)</td><td>Module 5</td><td>L3</td><td><code>OPTIONAL</code></td><td>Execute only upon explicit user request</td></tr>
+          <tr><td><code>FSTM-STAGE-09</code></td><td>Stage 9: Binary Exploitation &amp; ISVS Verification</td><td>Module 5</td><td>L3</td><td><code>OPTIONAL</code></td><td>Execute only upon explicit user request</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

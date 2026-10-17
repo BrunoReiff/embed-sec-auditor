@@ -3,25 +3,27 @@ name: owasp-iot-auditor
 description: >-
   Audits, verifies, and remediates embedded systems and IoT projects using the
   unified OWASP methodology (Embedded AppSec Best Practices, FSTM, ISTG, and
-  ISVS). Supports three modes: (1) Full/Incremental Project Audit following
-  Sections 6.1 and 6.2 with exact file/line mapping, a compliance report, and a
-  remediation plan, (2) Targeted Single-ID Verification Mode that verifies
-  specific OWASP IDs and, if PARTIAL/FAIL, invokes Mode 3 with the exact
-  missing items in a closed loop until PASS is guaranteed, and (3) Targeted ID
-  Remediation Mode where the agent fixes specific OWASP IDs (X, Y, Z) and loops
-  with Mode 2 until Mode 2 guarantees PASS.
+  ISVS). Generates standalone static HTML reports, remediation plans, and
+  checklists in English by default (linked for single-tab browser navigation).
+  Supports three modes: (1) Full/Incremental Project Audit following Sections
+  6.1 and 6.2 with exact file/line mapping, (2) Targeted Single-ID Verification
+  Mode that verifies specific OWASP IDs and loops with Mode 3 if PARTIAL/FAIL
+  until PASS is guaranteed, and (3) Targeted ID Remediation Mode that fixes
+  specific OWASP IDs (X, Y, Z) and loops with Mode 2 until PASS is guaranteed.
 ---
 
 # OWASP IoT & Embedded Security Auditor Skill
 
 > [!IMPORTANT]
-> **Universal English Standard (General Rule):** All files in this repository and all artifacts generated or updated by this skill (`owasp_iot_progress_checklist.md`, `owasp_iot_final_report.md`, `owasp_iot_remediation_plan.md`, source code comments, scripts, and documentation) **MUST be written and maintained strictly in English**, regardless of the language used by the user in the chat prompt.
+> **General Output Rules (Language & Format Defaults):**
+> 1. **English by Default:** All generated reports, remediation plans, and checklists **MUST be written in English by default**, regardless of the language used by the user in chat. Only write them in another language if the user **explicitly asks** for that language.
+> 2. **Static HTML (`.html`) by Default for Single-Tab Browser Navigation:** By default, generate all three output artifacts as **standalone static HTML files** (`owasp_iot_final_report.html`, `owasp_iot_remediation_plan.html`, and `owasp_iot_progress_checklist.html`) using the templates in `./resources/`. All three pages share a unified top navigation bar and direct anchor links (`./owasp_iot_remediation_plan.html#<OWASP_ID>`) so the user can navigate between the Final Report, the Remediation Plan, and the Checklist inside a **single browser tab**. Only generate `.md` if explicitly requested by the user.
 
 This Skill instructs the agent to operate in **three complementary operational modes** for security auditing, re-verification, and remediation across embedded systems and IoT ecosystems, based on the unified OWASP methodology described in this Skill (**Section 6.1** = scope classification in **Step 2**; **Section 6.2** = the 6 testing modules in **Step 4**) and the official OWASP repositories used as upstream sources in `IOT_OWASP/` (`embeddedappsec`, `owasp-fstm`, and `owasp-istg`, included as *git submodules*):
 
 | Invocation Mode | When to Use | How It Works / How the User Invokes It |
 | :--- | :--- | :--- |
-| **Mode 1 — Full / Incremental Audit** | To map the project, run all 6 modules of Section 6.2 (recording exact file and line numbers), and generate the Final Report + Remediation Plan. | *"Audit this project with the owasp-iot-auditor skill"* |
+| **Mode 1 — Full / Incremental Audit** | To map the project, run all 6 modules of Section 6.2 (recording exact file and line numbers), and generate the Static HTML Final Report + Linked Remediation Plan. | *"Audit this project with the owasp-iot-auditor skill"* |
 | **Mode 2 — Targeted ID Verification (Strict Judge)** | To re-test a specific `OWASP ID`. **If the result is `PARTIAL` or `FAIL`**, Mode 2 records the exact missing items and **invokes Mode 3 in a loop** until `PASS` is guaranteed. | *"Verify ID `ISTG-FW-SCRT-003`"* or *"Re-test `EMB-APPSEC-01`"* |
 | **Mode 3 — Targeted ID Remediation (Loop with Mode 2)** | To fix OWASP IDs `X, Y, Z`. Mode 3 **never** assumes `PASS` on its own: it applies the fix and invokes **Mode 2**; if `PARTIAL`, it receives the missing items from Mode 2 and repeats the loop until Mode 2 guarantees `PASS`. | *"Remediate OWASP IDs `ISTG-FW-SCRT-003`, `EMB-APPSEC-01`, and `ISTG-DES-CRYPT-001`"* |
 
@@ -34,9 +36,9 @@ flowchart TD
     %% USE CASE 1: MODE 1
     ROUTER -->|"Case 1: Audit Project (Mode 1)"| M1_E1["1. General Discovery (Artifacts, RTOS, SDK, Network, Hardware)"]
     M1_E1 --> M1_E2["2. Scope Classification (4 Categories of Section 6.1)"]
-    M1_E2 --> M1_E3["3. State-Tracking Checklist (owasp_iot_progress_checklist.md - Part C FSTM Optional)"]
+    M1_E2 --> M1_E3["3. State-Tracking HTML Checklist (owasp_iot_progress_checklist.html - Part C FSTM Optional)"]
     M1_E3 --> M1_E4["4. Sequential Execution Section 6.2 (Modules 1 to 6 recording Exact File & Line)"]
-    M1_E4 --> M1_E5["5. Generates Zero-Scroll Report (FAIL 1st, PARTIAL 2nd, PASS 3rd) + Remediation Plan"]
+    M1_E4 --> M1_E5["5. Generates Static HTML Zero-Scroll Report (FAIL 1st, PARTIAL 2nd, PASS 3rd) + Linked HTML Remediation Plan"]
 
     %% USE CASE 2: MODE 2 (DIRECT OR VIA EXTERNAL AGENT)
     ROUTER -->|"Case 2: Verify Specific OWASP ID (Mode 2)"| M2_READ["Mode 2: Reads File(s), Line(s) & Criteria for the OWASP ID"]
@@ -49,11 +51,11 @@ flowchart TD
     M3_FIX -->|"Triggers Verifier"| M2_INSP
 
     %% CLOSED LOOP MODE 2 <-> MODE 3
-    M2_JUDGE -->|"PARTIAL or FAIL (Items still missing)"| M2_DELTA["Mode 2: Updates to PARTIAL/FAIL & Records EXACT MISSING ITEMS (File/Line)"]
+    M2_JUDGE -->|"PARTIAL or FAIL (Items still missing)"| M2_DELTA["Mode 2: Updates HTML to PARTIAL/FAIL & Records EXACT MISSING ITEMS (File/Line)"]
     M2_DELTA -->|"Invokes Mode 3 passing missing items"| M3_LOC
 
     %% EXCLUSIVE PROMOTION BY MODE 2
-    M2_JUDGE -->|"PASS Guaranteed (100% Compliant)"| M2_PROMOTE["Mode 2: Promotes to PASS in Final Report, Marks [x] in Plan & Updates Checklist"]
+    M2_JUDGE -->|"PASS Guaranteed (100% Compliant)"| M2_PROMOTE["Mode 2: Promotes to PASS in HTML Final Report, Remediation Plan & Checklist"]
 ```
 
 ---
@@ -65,9 +67,9 @@ Whenever invoked to audit an embedded/IoT project in full (or resume where it le
 ```mermaid
 flowchart TD
     A["Step 1: General Project Discovery (Artifacts & Technologies)"] --> B["Step 2: Scope Classification (Section 6.1)"]
-    B --> C["Step 3: Initialize or Resume State-Tracking Checklist (Where it stopped / Where to go)"]
+    B --> C["Step 3: Initialize or Resume Static HTML Checklist (Where it stopped / Where to go)"]
     C --> D["Step 4: Sequential Test Execution (Section 6.2: Modules 1 to 6 with Exact File & Line)"]
-    D --> E["Step 5: Zero-Scroll Output Report + Remediation Plan by OWASP ID"]
+    D --> E["Step 5: Static HTML Zero-Scroll Report + Linked Remediation Plan"]
 ```
 
 ---
@@ -106,18 +108,18 @@ Based on the artifacts discovered in Step 1, classify the project across the **4
 
 ### Step 3: Using Checklists as a State Guide (Where the Agent Stopped & Where to Go Next)
 
-The agent **MUST** maintain a state-tracking checklist file in the audited project (by default `owasp_iot_progress_checklist.md`) based on:
+The agent **MUST** maintain a state-tracking static HTML checklist file in the audited project (by default `owasp_iot_progress_checklist.html`) based on:
 - **Part A (Mandatory):** [checklists/checklist.md](../../../IOT_OWASP/owasp-istg/checklists/checklist.md) (OWASP ISTG test cases);
 - **Part B (Mandatory):** The domains of [OWASP Embedded Application Security](../../../IOT_OWASP/embeddedappsec/SUMMARY.md);
 - **Part C (OPTIONAL — Only if requested by the user):** The 9 stages of [OWASP FSTM](../../../IOT_OWASP/owasp-fstm/README.md). Because the full FSTM process (binary extraction, emulation, and runtime exploitation) is lengthy and complex, it **MUST NOT be executed by default**, remaining with status `OPTIONAL` unless explicitly requested by the user.
 
 #### How to Operate the State-Tracking Checklist:
-1. **Check whether an active checklist already exists** in the project (`owasp_iot_progress_checklist.md`).
-   - **If it DOES NOT exist:** Copy the structure from the consolidated template [checklist_template.md](./resources/checklist_template.md), populating the **"Current Audit State"** header with the Section 6.1 classification, marking out-of-scope components as `N/A`, and applicable items (Parts A and B) as `PENDING` (keeping Part C as `OPTIONAL`).
-   - **If it ALREADY exists:** Read the **"Current Audit State (Agent Navigation Guide)"** block at the top of the file to immediately identify:
+1. **Check whether an active checklist already exists** in the project (`owasp_iot_progress_checklist.html`).
+   - **If it DOES NOT exist:** Copy the structure from the consolidated template [checklist_template.html](./resources/checklist_template.html), populating the **"Current Audit State"** header with the Section 6.1 classification, marking out-of-scope components as `N/A`, and applicable items (Parts A and B) as `PENDING` (keeping Part C as `OPTIONAL`).
+   - **If it ALREADY exists:** Read the **"Current Audit State"** block at the top of `owasp_iot_progress_checklist.html` to immediately identify:
      - **Where the agent stopped:** Last completed Section 6.2 module and last verified `Test ID`;
      - **Where the agent must go next:** Next Section 6.2 module and next `Test IDs` with status `PENDING` or `IN_PROGRESS`.
-2. **Continuous updating:** Upon completing each module of Section 6.2, update the status of every item in the checklist using the standardized nomenclature:
+2. **Continuous updating:** Upon completing each module of Section 6.2, update the status of every item in `owasp_iot_progress_checklist.html` using the standardized nomenclature:
    - `PASS` — Control properly implemented according to the OWASP standard;
    - `PARTIAL` — Control exists but is incomplete or has partial implementation flaws;
    - `FAIL` — Control missing or vulnerability confirmed;
@@ -133,7 +135,7 @@ Execute the technical verifications **strictly in the sequence of the 6 Modules 
 
 > [!IMPORTANT]
 > **MANDATORY (Exact File(s) and Line(s) Traceability for the Remediator Agent):**
-> During **Mode 1** execution (especially in **Module 1 — Embedded SAST & Memory Quality** and all subsequent modules), whenever a vulnerability or non-compliance (`FAIL` or `PARTIAL`) is detected, the agent **MUST mandatorily record ALL exact occurrences**, specifying **which file(s) and exact line number(s)** contain the issue (e.g., `[src/main.c:L42-L48](file:///abs/path/src/main.c#L42-L48)`, `[src/net.c:L115](file:///abs/path/src/net.c#L115)` + affected function/call name).
+> During **Mode 1** execution (especially in **Module 1 — Embedded SAST & Memory Quality** and all subsequent modules), whenever a vulnerability or non-compliance (`FAIL` or `PARTIAL`) is detected, the agent **MUST mandatorily record ALL exact occurrences**, specifying **which file(s) and exact line number(s)** contain the issue (e.g., `<a href="file:///abs/path/src/main.c#L42-L48"><code>src/main.c:L42-L48</code></a>` + affected function/call name).
 > **Objective:** Minimize the effort required by the remediating agent (whether in Mode 3 or an external agent), enabling it to open the exact file and line directly without rescanning the codebase.
 
 #### Mandatory Execution Order:
@@ -143,7 +145,7 @@ Execute the technical verifications **strictly in the sequence of the 6 Modules 
      - Banned/unsafe C/C++ functions (`gets`, `strcpy`, `strcat`, `sprintf`, `vsprintf`, unbounded `scanf("%s")`) and misuse of `strncpy`/`strncat` bounded by `strlen(src)`;
      - *OS Command Injection* and *Code Injection* vectors (`system`, `popen`, `exec*`, `os.execute`, `eval`, SQL queries without *prepared statements*);
      - Secure zeroization of sensitive buffers in RAM (`memset_s` / `mbedtls_platform_zeroize`, `mlock`, disabling *core dumps*), *Stack Overflow* protection (`configCHECK_FOR_STACK_OVERFLOW` in FreeRTOS), and hardware *watchdog*.
-   - **Mandatory Record for the Remediator:** List every unsafe call found with `[file:L<start>-L<end>](file:///path#L<start>-L<end>)`, the enclosing function, and the affected buffer/variable.
+   - **Mandatory Record for the Remediator:** List every unsafe call found with `<a href="file:///path#L<start>-L<end>"><code>file:L<start>-L<end></code></a>`, the enclosing function, and the affected buffer/variable.
    - **Checklist items updated in this module:**
      - `EMB-APPSEC-01` (Buffer/Stack Overflow), `EMB-APPSEC-02` (Injection Prevention), `ISTG-PROC-LOGIC-001`, `ISTG-DES-INPV-001`, `ISTG-DES-INPV-002`, `ISTG-INT-INPV-001/002`, `ISTG-INT[I2C]-INPV-001`, `ISTG-INT[UART]-INPV-001`, `ISTG-PHY-INPV-001/002`, `ISTG-WRLS-INPV-001/002`, `ISTG-UI-INPV-001/002`.
 
@@ -193,34 +195,37 @@ Execute the technical verifications **strictly in the sequence of the 6 Modules 
 
 ---
 
-### Step 5: Generating the Zero-Scroll Output Report + Remediation Plan (`owasp_iot_remediation_plan.md`)
+### Step 5: Generating the Static HTML Zero-Scroll Output Report + Linked Remediation Plan (`owasp_iot_remediation_plan.html`)
 
-After completing the execution of Modules 1 to 6 of Section 6.2 and updating the state-tracking checklist (`owasp_iot_progress_checklist.md`), the agent **MUST** generate **two complementary files** in the project:
+After completing the execution of Modules 1 to 6 of Section 6.2 and updating the static HTML state-tracking checklist (`owasp_iot_progress_checklist.html`), the agent **MUST** generate **two cross-linked static HTML files** in the project (written in **English by default**, unless the user explicitly requested another language):
 
-#### 5.1. Final Output Report (`owasp_iot_final_report.md` — based on [report_template.md](./resources/report_template.md))
+#### 5.1. Static HTML Final Output Report (`owasp_iot_final_report.html` — based on [report_template.html](./resources/report_template.html))
 
 > [!CAUTION]
-> **NEVER MIX STATUSES IN THE SAME TABLE IN THE OUTPUT REPORT:** The user must **not** have to scroll through component tables (`PROC`, `MEM`, `FW`, `DES`...) hunting for failed items. The output report **MUST** be structured into dedicated sections for each compliance status, with a **Quick Navigation Menu (clickable anchor links)** at the top and failed items placed first:
+> **NEVER MIX STATUSES IN THE SAME TABLE IN THE OUTPUT REPORT:** The user must **not** have to scroll through component tables (`PROC`, `MEM`, `FW`, `DES`...) hunting for failed items. The static HTML report **MUST** be structured into dedicated sections for each compliance status, with a **Unified Top Navigation Bar** (linking to `./owasp_iot_remediation_plan.html` and `./owasp_iot_progress_checklist.html` in the same browser tab), **Quick Navigation Cards** at the top, and failed items placed first:
 
-1. **⚡ Quick Navigation Menu at the Top (Table with Counts + Direct Clickable Links):**
-   - Allows jumping with 1 click directly to the desired section (`FAIL`, `PARTIAL`, `PASS`, `N/A`, `Remediation Plan`, `Discovery`).
+1. **⚡ Unified Top Bar + Quick Navigation Cards (Counts + Direct Clickable Links):**
+   - Allows jumping with 1 click directly to the desired section (`#sec-fail`, `#sec-partial`, `#sec-pass`, `#sec-na`, `#sec-discovery`) or switching in the **same browser tab** to `./owasp_iot_remediation_plan.html` and `./owasp_iot_progress_checklist.html`.
 2. **❌ Section 1 — Topics FULLY NON-COMPLIANT with Standards (`FAIL` — Failed the Test):**
-   - Positioned **at the very top of the report** (right below the index) for immediate visibility without scrolling.
-   - Consolidates all `FAIL` items from the checklist into a single table with `OWASP ID`, `Module (6.2)`, `Component`, `Topic`, `Verifiable Evidence (File/Line)`, `Risk (STRIDE/CWE)`, and `Remediation Recommendation`.
+   - Positioned **at the very top of the report** (right below the KPI cards) for immediate visibility without scrolling.
+   - Consolidates all `FAIL` items from the checklist into a single HTML table (`#tbody-fail`) with `OWASP ID`, `Module (6.2)`, `Component`, `Checklist Topic`, `Exact Location (File(s) & Line(s)) + Evidence`, `Risk (STRIDE/CWE)`, and `Remediation & Action Link` (including `<a class="fix-link" href="./owasp_iot_remediation_plan.html#<OWASP_ID>">🛠️ Open in Remediation Plan &rarr;</a>`).
 3. **⚠️ Section 2 — Topics PARTIALLY COMPLIANT with Standards (`PARTIAL`):**
-   - Consolidates all items with partial/incomplete mitigation into a dedicated section, clearly stating *what is already in place vs. what is missing* and the direct adjustment recommendation.
+   - Consolidates all items with partial/incomplete mitigation into `#tbody-partial`, clearly stating *what is already in place vs. what is missing*, the direct adjustment recommendation, and a link `<a class="fix-link" href="./owasp_iot_remediation_plan.html#<OWASP_ID>">🛠️ Open in Remediation Plan &rarr;</a>`.
 4. **✅ Section 3 — Topics FULLY COMPLIANT with Standards (`PASS`):**
-   - Consolidates all items that passed testing in full along with their verified evidence.
+   - Consolidates all items that passed testing in full (`#tbody-pass`) along with their verified evidence.
 5. **⚪ Section 4 — Not Applicable Topics (`N/A`):**
-   - Compact summary of components/tests outside the architectural scope of the project.
+   - Compact summary (`#tbody-na`) of components/tests outside the architectural scope of the project.
 6. **🔍 Section 5 — General Discovery & Scope Classification Summary (Section 6.1):**
    - Detected artifacts/technologies and which of the 4 categories of Section 6.1 were activated.
 
-#### 5.2. User Remediation & Tracking File (`owasp_iot_remediation_plan.md` — based on [remediation_tracker_template.md](./resources/remediation_tracker_template.md))
-- Create `owasp_iot_remediation_plan.md` listing all `FAIL` (High Priority) and `PARTIAL` (Medium Priority) items as actionable task cards (`[ ] <OWASP_ID> — <Name>`) containing:
+#### 5.2. Static HTML Remediation & Action Plan (`owasp_iot_remediation_plan.html` — based on [remediation_tracker_template.html](./resources/remediation_tracker_template.html))
+- Create `owasp_iot_remediation_plan.html` listing all `FAIL` (High Priority) and `PARTIAL` (Medium Priority) items as actionable HTML cards (`<article class="remediation-card ..." id="<OWASP_ID>">`) containing:
+  - Top navigation bar linking back to `./owasp_iot_final_report.html` and `./owasp_iot_progress_checklist.html` in the same browser tab;
   - The exact file(s) and line(s) where the issue occurs;
-  - A **Ready-to-Copy Prompt** in case the user wants to ask another Developer Agent to fix that flaw;
-  - The **Ready-to-Use Targeted Re-verification Command by OWASP ID** (e.g., `"Verify ID ISTG-FW-SCRT-003"`) for the user to invoke this Verifier Agent once the fix is complete.
+  - Interactive **Copy** buttons for:
+    - **Direct Command (Mode 3):** `"Remediate OWASP ID <OWASP_ID>"`
+    - **Ready-to-Copy Prompt for External Developer Agent**
+    - **Standalone Re-test Command (Mode 2):** `"Verify ID <OWASP_ID>"`
 
 ---
 
@@ -232,18 +237,18 @@ Instead, **Mode 2** acts as a **strict compliance judge** and, if it identifies 
 
 ```mermaid
 flowchart TD
-    R1["Step 1: Locate OWASP ID in Plan/Report & Technical Rules"] --> R2["Step 2: Surgical Inspection of Vulnerability Files & Lines"]
+    R1["Step 1: Locate OWASP ID in HTML Plan/Report & Technical Rules"] --> R2["Step 2: Surgical Inspection of Vulnerability Files & Lines"]
     R2 --> R3{"Step 3: What is the Actual Verification Verdict (Mode 2)?"}
-    R3 -->|"PARTIAL or FAIL (Items still missing)"| R_LOOP["Update status to PARTIAL/FAIL, list EXACT missing items (File/Line) & INVOKE MODE 3"]
+    R3 -->|"PARTIAL or FAIL (Items still missing)"| R_LOOP["Update HTML status to PARTIAL/FAIL, list EXACT missing items (File/Line) & INVOKE MODE 3"]
     R_LOOP -->|"Mode 3 fixes missing items and re-invokes Mode 2"| R2
-    R3 -->|"PASS Guaranteed (100% compliant with standards)"| R4["Step 4: Promote to PASS in Report, Plan & Checklist"]
+    R3 -->|"PASS Guaranteed (100% compliant with standards)"| R4["Step 4: Promote to PASS in HTML Report, Plan & Checklist"]
 ```
 
 ### Mandatory Step-by-Step for Mode 2:
 
 1. **Step 1 — Locate Context for `<OWASP_ID>`:**
-   - Read the entry corresponding to `<OWASP_ID>` in `owasp_iot_remediation_plan.md`, `owasp_iot_final_report.md`, and `owasp_iot_progress_checklist.md` to identify all affected files and lines.
-   - Consult the exact acceptance criteria for `<OWASP_ID>` in [verification_rules.md](./references/verification_rules.md) (or run the helper script with `-VerifyId <OWASP_ID>` / `--verify-id <OWASP_ID>`).
+   - Read the entry corresponding to `<OWASP_ID>` in `owasp_iot_remediation_plan.html`, `owasp_iot_final_report.html`, and `owasp_iot_progress_checklist.html` to identify all affected files and lines.
+   - Consult the exact acceptance criteria for `<OWASP_ID>` in [verification_rules.md](./references/verification_rules.md) (or run the helper script with `--verify-id <OWASP_ID>`).
 2. **Step 2 — Surgical Inspection of Code/Configuration:**
    - Directly inspect all files and lines where the vulnerability was located (and related files if the logic was moved/refactored).
    - Strictly verify whether **all** occurrences were fixed and no incomplete mitigation remains (e.g., fixed `strcpy` in 2 files but missed 1, replaced `strcpy` with `strncpy` without guaranteeing null termination `\0`, or validated OTA version in code but forgot to enable the flag in `sdkconfig`).
@@ -251,16 +256,16 @@ flowchart TD
    - Classify the actual state of `<OWASP_ID>`:
      - **If the result is `⚠️ PARTIAL` (Partially Compliant) or `❌ FAIL` (Fully Non-Compliant):**
        1. **DO NOT promote to `PASS`!**
-       2. Update the record in `owasp_iot_final_report.md` (moving from `FAIL` to the `⚠️ PARTIAL` section if partial progress was made) and in `owasp_iot_remediation_plan.md`, recording **the exact missing items (File(s), Line(s), and pending requirement)**.
+       2. Update the record in `owasp_iot_final_report.html` (moving from `#tbody-fail` to `#tbody-partial` if partial progress was made) and in `owasp_iot_remediation_plan.html`, recording **the exact missing items (File(s), Line(s), and pending requirement)**.
        3. **Immediately invoke Mode 3 (Remediator Agent)** — via `invoke_subagent` (`self`, `Role: "OWASP ID Remediator - Mode 3"`) or direct execution of the Mode 3 protocol — passing specifically **the diagnosis of what still needs to be completed** for that `OWASP ID`.
-       4. After Mode 3 applies the complementary fix, Mode 2 re-runs the surgical inspection (**Step 2**). This **loop (`Mode 2` $\rightarrow$ `Mode 3` $\rightarrow$ `Mode 2`) must continue until Mode 2 guarantees `✅ PASS`** *(except if there is an external physical hardware limitation impossible to resolve via software/configuration; in that sole case, the loop ends while keeping `⚠️ PARTIAL` across all 3 files and explaining the physical limitation to the user)*.
+       4. After Mode 3 applies the complementary fix, Mode 2 re-runs the surgical inspection (**Step 2**). This **loop (`Mode 2` $\rightarrow$ `Mode 3` $\rightarrow$ `Mode 2`) must continue until Mode 2 guarantees `✅ PASS`** *(except if there is an external physical hardware limitation impossible to resolve via software/configuration; in that sole case, the loop ends while keeping `⚠️ PARTIAL` across all 3 HTML files and explaining the physical limitation to the user)*.
      - **If and only if the result is `✅ PASS` (100% Compliant with Standards):**
        - Proceed to **Step 4**.
-4. **Step 4 — Promotion to `PASS` Across All 3 Files (Only After Mode 2 Guarantees It):**
-   - **`owasp_iot_remediation_plan.md`:** Check the box `[x]`, update the status to `🟢 Re-tested and Approved (PASS)`, update the top summary counters, and append a row to **"3. History of Resolved & Approved Issues (`PASS`)"**.
-   - **`owasp_iot_final_report.md`:** Move the `<OWASP_ID>` row from the `❌ FAIL` or `⚠️ PARTIAL` table to the `✅ PASS` table and update the counters in the **Quick Navigation Menu at the Top**.
-   - **`owasp_iot_progress_checklist.md`:** Update the `Status` column to `PASS` and `Notes / Evidence` with the verified files and lines.
-   - **In Chat:** Reply concisely showing the iteration history (`FAIL` $\rightarrow$ `PARTIAL` $\rightarrow$ `PASS`), the verified evidence, and confirmation that all tracking files were updated.
+4. **Step 4 — Promotion to `PASS` Across All 3 HTML Files (Only After Mode 2 Guarantees It):**
+   - **`owasp_iot_remediation_plan.html`:** Mark the card checkbox as checked (`<input type="checkbox" checked>`), update the badge to `PASS`, update the top KPI counters (`#rem-count-fail`, `#rem-count-partial`, `#rem-count-pass`), and append a row to `#tbody-resolved-history`.
+   - **`owasp_iot_final_report.html`:** Move the `<OWASP_ID>` row from `#tbody-fail` or `#tbody-partial` to `#tbody-pass` and update the top KPI counters (`#count-fail`, `#count-partial`, `#count-pass`).
+   - **`owasp_iot_progress_checklist.html`:** Update the `Status` cell to `<code>PASS</code>` and `Notes / Evidence` with the verified files and lines.
+   - **In Chat:** Reply concisely showing the iteration history (`FAIL` $\rightarrow$ `PARTIAL` $\rightarrow$ `PASS`), the verified evidence, and confirmation that all HTML tracking files were updated.
 
 ---
 
@@ -275,23 +280,23 @@ flowchart LR
     S1["Mode 3 (Step 1): Read Exact Files/Lines & Pending Gaps for IDs (X, Y, Z)"] --> S2["Mode 3 (Step 2): Implement Fix Exclusively at Mapped Points"]
     S2 --> S3["Mode 3 (Step 3): Invoke Mode 2 (Verifier) Without Promoting Status Before Verdict"]
     S3 --> V2{"Mode 2 Evaluates: Is it 100% PASS?"}
-    V2 -->|"No (PARTIAL or FAIL)"| S_DELTA["Mode 2 updates to PARTIAL/FAIL and invokes Mode 3 passing EXACT MISSING ITEMS"]
+    V2 -->|"No (PARTIAL or FAIL)"| S_DELTA["Mode 2 updates HTML to PARTIAL/FAIL and invokes Mode 3 passing EXACT MISSING ITEMS"]
     S_DELTA --> S2
-    V2 -->|"Yes (Mode 2 guarantees PASS)"| S4["Mode 2 promotes to PASS in Report, Plan & Checklist"]
+    V2 -->|"Yes (Mode 2 guarantees PASS)"| S4["Mode 2 promotes to PASS in HTML Report, Plan & Checklist"]
 ```
 
 ### Mandatory Step-by-Step for Mode 3:
 
 1. **Step 1 — Focused Reading of OWASP IDs (`X, Y, Z`) or Remaining Delta Sent by Mode 2:**
-   - If 1st iteration: consult `owasp_iot_remediation_plan.md` and `owasp_iot_final_report.md` to obtain the **Exact Location (`File(s)` and `Line(s)`)** of all occurrences of the `OWASP ID`, plus the rules in [verification_rules.md](./references/verification_rules.md).
+   - If 1st iteration: consult `owasp_iot_remediation_plan.html` and `owasp_iot_final_report.html` to obtain the **Exact Location (`File(s)` and `Line(s)`)** of all occurrences of the `OWASP ID`, plus the rules in [verification_rules.md](./references/verification_rules.md).
    - If re-invoked by **Mode 2** (after a `PARTIAL` or `FAIL` verdict): read the exact list of **"missing items to complete"** (files, lines, and residual controls pointed out by Mode 2).
 2. **Step 2 — Exclusive Implementation of the Fix in Code/Configuration:**
    - Apply the code, build configuration, or script changes required to remediate **all** mapped occurrences of OWASP IDs `X, Y, Z`, without altering unrelated parts of the project.
-   - **Strict Rule:** Mode 3 **DOES NOT** change the status to `PASS` in the report or checklist at this stage.
+   - **Strict Rule:** Mode 3 **DOES NOT** change the status to `PASS` in the HTML report or checklist at this stage.
 3. **Step 3 — Mandatory Invocation of Mode 2 & Loop Until `PASS` is Guaranteed:**
    - Once code edits are complete, immediately invoke **Mode 2 (Targeted ID Verification)** (via the `self` subagent with `Role: "OWASP ID Verifier - Mode 2"` or by strictly executing Steps 1 to 4 of Mode 2):
      - If **Mode 2** determines that the fix is **`⚠️ PARTIAL`** (e.g., fixed only some files or part of the requirement) or **`❌ FAIL`**, **Mode 2** will update the intermediate status to `PARTIAL`/`FAIL` specifying **what still needs to be completed** and **will invoke Mode 3 again** to fix the remainder.
      - This **loop (`Mode 3` $\leftrightarrow$ `Mode 2`) continues iterating** until **Mode 2** confirms no pending gaps remain and issues the final `✅ PASS` verdict.
 4. **Step 4 — Final Consolidation by Mode 2:**
-   - Only when **Mode 2** guarantees `✅ PASS` will `owasp_iot_final_report.md`, `owasp_iot_remediation_plan.md`, and `owasp_iot_progress_checklist.md` have the item promoted to `PASS`.
+   - Only when **Mode 2** guarantees `✅ PASS` will `owasp_iot_final_report.html`, `owasp_iot_remediation_plan.html`, and `owasp_iot_progress_checklist.html` have the item promoted to `PASS`.
    - Present a summary of the changes applied across each iteration and the confirmation of Mode 2's final verdict to the user.

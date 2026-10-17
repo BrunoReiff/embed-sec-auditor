@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OWASP IoT &amp; Embedded Security Audit Report — &lt;PROJECT_NAME&gt;</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #26354d;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --fail: #ef4444;
+      --fail-bg: rgba(239, 68, 68, 0.12);
+      --partial: #f59e0b;
+      --partial-bg: rgba(245, 158, 11, 0.12);
+      --pass: #10b981;
+      --pass-bg: rgba(16, 185, 129, 0.12);
+      --na: #64748b;
+      --na-bg: rgba(100, 116, 139, 0.15);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .topbar-brand {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .nav-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .nav-tab {
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .nav-tab:hover { background: var(--surface-hover); text-decoration: none; }
+    .nav-tab.active {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+    }
+    .nav-tab.cta-plan {
+      border-color: var(--partial);
+      color: #fbbf24;
+    }
+    .container { max-width: 1380px; margin: 0 auto; padding: 1.75rem 2rem 4rem; }
+    .header-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .header-card h1 { margin: 0 0 0.4rem; font-size: 1.5rem; }
+    .meta-list { color: var(--muted); font-size: 0.9rem; margin: 0; }
+    .meta-list strong { color: var(--text); }
+    .btn-remediation {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+      padding: 0.65rem 1.15rem;
+      border-radius: 8px;
+      border: 1px solid #3b82f6;
+      font-size: 0.92rem;
+    }
+    .btn-remediation:hover { background: #1d4ed8; text-decoration: none; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.12s, border-color 0.12s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); text-decoration: none; }
+    .kpi-card.fail { border-left: 4px solid var(--fail); background: var(--fail-bg); }
+    .kpi-card.partial { border-left: 4px solid var(--partial); background: var(--partial-bg); }
+    .kpi-card.pass { border-left: 4px solid var(--pass); background: var(--pass-bg); }
+    .kpi-card.na { border-left: 4px solid var(--na); background: var(--na-bg); }
+    .kpi-card.plan { border-left: 4px solid var(--accent); }
+    .kpi-label { font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .kpi-value { font-size: 1.85rem; font-weight: 800; margin: 0.25rem 0; color: var(--text); }
+    .kpi-link { font-size: 0.83rem; color: var(--accent); font-weight: 600; }
+    .tip-box {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 8px;
+      padding: 0.9rem 1.2rem;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+    }
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.75rem;
+      scroll-margin-top: 4.5rem;
+    }
+    section h2 { margin-top: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+    .section-desc { color: var(--muted); font-size: 0.9rem; margin-top: -0.4rem; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.65rem 0.8rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: rgba(15, 23, 42, 0.6); color: var(--muted); font-weight: 600; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: rgba(15, 23, 42, 0.75);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.84rem;
+      color: #e2e8f0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.18rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-fail { background: var(--fail); color: #fff; }
+    .badge-partial { background: var(--partial); color: #0f172a; }
+    .badge-pass { background: var(--pass); color: #0f172a; }
+    .badge-na { background: var(--na); color: #fff; }
+    .fix-link {
+      display: inline-block;
+      margin-top: 0.35rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Unified Single-Tab Navigation Bar -->
+  <nav class="topbar">
+    <div class="topbar-brand">🛡️ OWASP IoT &amp; Embedded Security Auditor</div>
+    <div class="nav-tabs">
+      <a class="nav-tab active" href="./owasp_iot_final_report.html">📊 Final Audit Report</a>
+      <a class="nav-tab cta-plan" href="./owasp_iot_remediation_plan.html">🛠️ Remediation Plan (Action Tracker)</a>
+      <a class="nav-tab" href="./owasp_iot_progress_checklist.html">🧭 Progress Checklist</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="header-card">
+      <div>
+        <h1>OWASP IoT &amp; Embedded Security Audit Report</h1>
+        <p class="meta-list">
+          <strong>Analyzed Project:</strong> <code>&lt;PROJECT_NAME&gt;</code> &nbsp;|&nbsp;
+          <strong>Audit Date:</strong> <code>&lt;YYYY-MM-DD&gt;</code> &nbsp;|&nbsp;
+          <strong>Standards:</strong> OWASP Embedded AppSec, OWASP ISTG (86 Test Cases), OWASP ISVS
+        </p>
+      </div>
+      <a class="btn-remediation" href="./owasp_iot_remediation_plan.html">🛠️ Open Remediation Plan &rarr;</a>
+    </header>
+
+    <!-- ⚡ Quick Navigation Index (Zero-Scroll) -->
+    <div class="kpi-grid">
+      <a class="kpi-card fail" href="#sec-fail">
+        <span class="kpi-label">❌ 1. Fully Non-Compliant (FAIL)</span>
+        <span class="kpi-value" id="count-fail">&lt;N_FAIL&gt;</span>
+        <span class="kpi-link">Jump to FAIL Table &darr;</span>
+      </a>
+      <a class="kpi-card partial" href="#sec-partial">
+        <span class="kpi-label">⚠️ 2. Partially Compliant (PARTIAL)</span>
+        <span class="kpi-value" id="count-partial">&lt;N_PARTIAL&gt;</span>
+        <span class="kpi-link">Jump to PARTIAL Table &darr;</span>
+      </a>
+      <a class="kpi-card pass" href="#sec-pass">
+        <span class="kpi-label">✅ 3. Fully Compliant (PASS)</span>
+        <span class="kpi-value" id="count-pass">&lt;N_PASS&gt;</span>
+        <span class="kpi-link">Jump to PASS Table &darr;</span>
+      </a>
+      <a class="kpi-card na" href="#sec-na">
+        <span class="kpi-label">⚪ 4. Not Applicable (N/A)</span>
+        <span class="kpi-value" id="count-na">&lt;N_NA&gt;</span>
+        <span class="kpi-link">Jump to N/A Table &darr;</span>
+      </a>
+      <a class="kpi-card plan" href="./owasp_iot_remediation_plan.html">
+        <span class="kpi-label">🛠️ Remediation &amp; Re-test Plan</span>
+        <span class="kpi-value">Action Cards</span>
+        <span class="kpi-link">Open Remediation Plan &rarr;</span>
+      </a>
+      <a class="kpi-card" href="#sec-discovery">
+        <span class="kpi-label">🔍 5. Discovery &amp; Scope (6.1)</span>
+        <span class="kpi-value">Inventory</span>
+        <span class="kpi-link">Jump to Discovery &darr;</span>
+      </a>
+    </div>
+
+    <div class="tip-box">
+      <strong>💡 Closed-Loop Remediation &amp; Re-verification (<code>Mode 3</code> &harr; <code>Mode 2</code>):</strong><br>
+      &bull; <strong>To have this agent fix + verify automatically (Mode 3):</strong> Prompt <code>"Remediate OWASP IDs &lt;ID_1&gt;, &lt;ID_2&gt;"</code>. Mode 3 applies the fix and invokes Mode 2; if <code>PARTIAL</code>, Mode 2 returns the exact missing items to Mode 3 in a closed loop until Mode 2 guarantees <code>PASS</code>.<br>
+      &bull; <strong>To re-test after an external fix (Mode 2):</strong> Prompt <code>"Verify ID &lt;OWASP_ID&gt;"</code>. Click any <strong>🛠️ Fix Plan</strong> button below to view ready-to-copy prompts in the <a href="./owasp_iot_remediation_plan.html">Remediation Plan</a>.
+    </div>
+
+    <!-- ❌ SECTION 1: FAIL (ALWAYS PLACED FIRST) -->
+    <section id="sec-fail">
+      <h2>❌ 1. Topics FULLY NON-COMPLIANT with Standards (<span class="badge badge-fail">FAIL</span>)</h2>
+      <p class="section-desc">These items failed testing (missing control or confirmed vulnerability) and require priority remediation. Exact affected files and lines are mapped below.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>OWASP ID</th>
+            <th>Module (6.2)</th>
+            <th>Component</th>
+            <th>Checklist Topic</th>
+            <th>Exact Location (File(s) &amp; Line(s)) + Evidence</th>
+            <th>Risk (STRIDE / CWE)</th>
+            <th>Remediation &amp; Action Link</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-fail">
+          <tr id="row-EMB-APPSEC-01">
+            <td><code>&lt;Ex.: EMB-APPSEC-01&gt;</code></td>
+            <td><code>Module 1</code></td>
+            <td><code>EMB-APPSEC</code></td>
+            <td>Buffer and Stack Overflow Protection</td>
+            <td><a href="file:///path/to/src/main.c#L42-L48"><code>src/main.c:L42-L48</code></a> (<code>parse_uart_cmd</code>: unbounded <code>strcpy</code>)</td>
+            <td>Elevation of Privilege / <code>CWE-120</code></td>
+            <td>
+              Replace <code>strcpy</code>/<code>sprintf</code> with <code>snprintf</code>.<br>
+              <a class="fix-link" href="./owasp_iot_remediation_plan.html#EMB-APPSEC-01">🛠️ Open in Remediation Plan &rarr;</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ⚠️ SECTION 2: PARTIAL -->
+    <section id="sec-partial">
+      <h2>⚠️ 2. Topics PARTIALLY COMPLIANT with Standards (<span class="badge badge-partial">PARTIAL</span>)</h2>
+      <p class="section-desc">These items have partial controls in place, but exhibit residual gaps or incomplete configurations at the exact files and lines listed below.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>OWASP ID</th>
+            <th>Module (6.2)</th>
+            <th>Component</th>
+            <th>Checklist Topic</th>
+            <th>Exact Location (File(s) &amp; Line(s)) + What is Missing</th>
+            <th>Direct Adjustment &amp; Action Link</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-partial">
+          <tr id="row-ISTG-FW-UPDT-LOGIC-001">
+            <td><code>&lt;Ex.: ISTG-FW[UPDT]-LOGIC-001&gt;</code></td>
+            <td><code>Module 4</code></td>
+            <td><code>FW[UPDT]</code></td>
+            <td>Insufficient Rollback Protection</td>
+            <td>Checks version in <a href="file:///path/to/src/ota.c#L40-L52"><code>src/ota.c:L40-L52</code></a>, but <a href="file:///path/to/sdkconfig#L112"><code>sdkconfig:L112</code></a> does not enable hardware eFuse anti-rollback.</td>
+            <td>
+              Enable <code>CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK=y</code> in <code>sdkconfig</code>.<br>
+              <a class="fix-link" href="./owasp_iot_remediation_plan.html#ISTG-FW[UPDT]-LOGIC-001">🛠️ Open in Remediation Plan &rarr;</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ✅ SECTION 3: PASS -->
+    <section id="sec-pass">
+      <h2>✅ 3. Topics FULLY COMPLIANT with Standards (<span class="badge badge-pass">PASS</span>)</h2>
+      <p class="section-desc">These items passed testing in full and satisfy all OWASP requirements.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>OWASP ID</th>
+            <th>Module (6.2)</th>
+            <th>Component</th>
+            <th>Checklist Topic</th>
+            <th>Verified Evidence (File / Line)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-pass">
+          <tr id="row-ISTG-DES-CRYPT-001">
+            <td><code>&lt;Ex.: ISTG-DES-CRYPT-001&gt;</code></td>
+            <td><code>Module 2</code></td>
+            <td><code>DES</code></td>
+            <td>Usage of Strong Cryptographic Algorithms in Transit (TLS 1.2/1.3)</td>
+            <td><a href="file:///path/to/src/net.c#L10-L25"><code>src/net.c:L10-L25</code></a></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ⚪ SECTION 4: N/A -->
+    <section id="sec-na">
+      <h2>⚪ 4. Not Applicable Topics (<span class="badge badge-na">N/A</span>)</h2>
+      <p class="section-desc">Components and test cases outside the architectural scope of this project.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>OWASP ID / Group</th>
+            <th>Component</th>
+            <th>Justification for Non-Applicability</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-na">
+          <tr>
+            <td><code>&lt;Ex.: ISTG-INT[I2C]-*&gt;</code></td>
+            <td><code>INT[I2C]</code></td>
+            <td>No I2C bus or peripheral present in the project.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 🔍 SECTION 5: GENERAL DISCOVERY & SCOPE CLASSIFICATION (SECTION 6.1) -->
+    <section id="sec-discovery">
+      <h2>🔍 5. General Project Discovery &amp; Scope Classification (Section 6.1)</h2>
+      <h3>5.1. Identified Artifacts &amp; Technologies</h3>
+      <ul>
+        <li><strong>Architecture / MCU / SoC:</strong> <code>&lt;Ex.: ESP32 (Xtensa LX6) / STM32 / Embedded Linux&gt;</code></li>
+        <li><strong>Operating System / SDK / Build:</strong> <code>&lt;Ex.: FreeRTOS + ESP-IDF / PlatformIO / CMakeLists.txt&gt;</code></li>
+        <li><strong>Detected Protocols &amp; Interfaces:</strong> <code>&lt;Ex.: MQTT over TLS, HTTP REST, Wi-Fi, UART, I2C, SPI&gt;</code></li>
+        <li><strong>Cryptographic Libraries &amp; Storage:</strong> <code>&lt;Ex.: mbedTLS, NVS, LittleFS&gt;</code></li>
+      </ul>
+
+      <h3>5.2. Scope Classification (Section 6.1)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Category (Section 6.1)</th>
+            <th>Present?</th>
+            <th>Activated OWASP Modules &amp; Components</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Firmware / Embedded Code</strong></td>
+            <td><code>&lt;Yes/No&gt;</code></td>
+            <td><code>ISTG-FW</code>, <code>ISTG-MEM</code>, <code>ISTG-PROC</code>, <code>ISTG-INT[UART/I2C]</code>, <code>Embedded AppSec</code></td>
+          </tr>
+          <tr>
+            <td><strong>2. Build System / Firmware Image</strong></td>
+            <td><code>&lt;Yes/No&gt;</code></td>
+            <td><code>ISTG-FW-INFO-004</code>, <code>ISTG-FW-CONF-002</code>, <code>ISTG-FW[INST]-CRYPT-001</code>, <code>ISTG-FW-CONF-001</code></td>
+          </tr>
+          <tr>
+            <td><strong>3. Backend / Broker / Data Services</strong></td>
+            <td><code>&lt;Yes/No&gt;</code></td>
+            <td><code>ISTG-DES</code></td>
+          </tr>
+          <tr>
+            <td><strong>4. Web App / Dashboard / Mobile / Interfaces</strong></td>
+            <td><code>&lt;Yes/No&gt;</code></td>
+            <td><code>ISTG-UI</code>, <code>ISTG-WRLS</code>, <code>ISTG-PHY</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

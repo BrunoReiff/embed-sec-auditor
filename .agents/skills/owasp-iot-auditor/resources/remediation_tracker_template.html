@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OWASP IoT Remediation &amp; Re-test Plan — &lt;PROJECT_NAME&gt;</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #26354d;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --fail: #ef4444;
+      --partial: #f59e0b;
+      --pass: #10b981;
+      --dev: #3b82f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .topbar-brand { font-weight: 700; font-size: 1.05rem; }
+    .nav-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .nav-tab {
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+    .nav-tab:hover { background: var(--surface-hover); text-decoration: none; }
+    .nav-tab.active {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+    }
+    .container { max-width: 1380px; margin: 0 auto; padding: 1.75rem 2rem 4rem; }
+    .header-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .header-card h1 { margin: 0 0 0.35rem; font-size: 1.5rem; }
+    .meta-list { color: var(--muted); font-size: 0.9rem; margin: 0; }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface-hover);
+      color: var(--text);
+      font-weight: 600;
+      padding: 0.6rem 1.1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .btn-back:hover { border-color: var(--accent); text-decoration: none; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.9rem;
+      margin-bottom: 1.5rem;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem 1.15rem;
+    }
+    .kpi-card.fail { border-left: 4px solid var(--fail); }
+    .kpi-card.partial { border-left: 4px solid var(--partial); }
+    .kpi-card.dev { border-left: 4px solid var(--dev); }
+    .kpi-card.pass { border-left: 4px solid var(--pass); }
+    .kpi-label { font-size: 0.8rem; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+    .kpi-value { font-size: 1.7rem; font-weight: 800; margin-top: 0.2rem; }
+    .usage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .usage-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      font-size: 0.9rem;
+    }
+    .usage-box h3 { margin-top: 0; font-size: 1rem; color: var(--accent); }
+    .remediation-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+      scroll-margin-top: 4.5rem;
+    }
+    .remediation-card.fail-card { border-left: 5px solid var(--fail); }
+    .remediation-card.partial-card { border-left: 5px solid var(--partial); }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+      margin-bottom: 0.9rem;
+    }
+    .card-title { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; margin: 0; }
+    .badge {
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    .badge-fail { background: var(--fail); color: #fff; }
+    .badge-partial { background: var(--partial); color: #0f172a; }
+    .badge-pass { background: var(--pass); color: #0f172a; }
+    .cmd-block {
+      background: #0b1120;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.55rem 0.8rem;
+      margin: 0.35rem 0 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+    }
+    .copy-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.76rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: rgba(15, 23, 42, 0.75);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.84rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; background: var(--surface); border-radius: 8px; overflow: hidden; }
+    th, td { border: 1px solid var(--border); padding: 0.65rem 0.8rem; text-align: left; vertical-align: top; }
+    th { background: rgba(15, 23, 42, 0.6); color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <!-- Unified Single-Tab Navigation Bar -->
+  <nav class="topbar">
+    <div class="topbar-brand">🛠️ OWASP IoT Remediation &amp; Re-verification Plan</div>
+    <div class="nav-tabs">
+      <a class="nav-tab" href="./owasp_iot_final_report.html">📊 Final Audit Report</a>
+      <a class="nav-tab active" href="./owasp_iot_remediation_plan.html">🛠️ Remediation Plan (Action Tracker)</a>
+      <a class="nav-tab" href="./owasp_iot_progress_checklist.html">🧭 Progress Checklist</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="header-card">
+      <div>
+        <h1>Remediation &amp; Targeted Re-verification Plan by OWASP ID</h1>
+        <p class="meta-list">
+          <strong>Project:</strong> <code>&lt;PROJECT_NAME&gt;</code> &nbsp;|&nbsp;
+          <strong>Last Updated:</strong> <code>&lt;YYYY-MM-DD HH:MM&gt;</code>
+        </p>
+      </div>
+      <a class="btn-back" href="./owasp_iot_final_report.html">&larr; Back to Final Audit Report</a>
+    </header>
+
+    <!-- 📊 Remediation Progress Dashboard -->
+    <div class="kpi-grid">
+      <div class="kpi-card fail">
+        <div class="kpi-label">🔴 Pending Remediation (FAIL)</div>
+        <div class="kpi-value" id="rem-count-fail">&lt;N_FAIL&gt;</div>
+      </div>
+      <div class="kpi-card partial">
+        <div class="kpi-label">🟡 Pending Adjustment (PARTIAL)</div>
+        <div class="kpi-value" id="rem-count-partial">&lt;N_PARTIAL&gt;</div>
+      </div>
+      <div class="kpi-card dev">
+        <div class="kpi-label">🔵 Fixed by Dev (Awaiting Re-test)</div>
+        <div class="kpi-value" id="rem-count-dev">0</div>
+      </div>
+      <div class="kpi-card pass">
+        <div class="kpi-label">🟢 Re-tested &amp; Approved (PASS)</div>
+        <div class="kpi-value" id="rem-count-pass">&lt;N_PASS&gt;</div>
+      </div>
+    </div>
+
+    <!-- 💡 How to Use This File -->
+    <div class="usage-grid">
+      <div class="usage-box">
+        <h3>⚡ Option A — This Agent Remediates + Verifies in a Closed Loop (Mode 3 &harr; Mode 2 — Recommended)</h3>
+        <p>Copy and send the <strong>Mode 3 Direct Command</strong> for one or more OWASP IDs (e.g., <code>"Remediate OWASP IDs ISTG-FW-SCRT-003, EMB-APPSEC-01"</code>). Mode 3 applies the fix and invokes Mode 2; if <code>PARTIAL</code>, Mode 2 sends the exact missing items back to Mode 3 until <code>PASS</code> is guaranteed.</p>
+      </div>
+      <div class="usage-box">
+        <h3>📋 Option B — Fix with an External Agent (or Manually) &amp; Re-test in Mode 2</h3>
+        <p>1. Click <strong>Copy</strong> on the <em>"Ready-to-Copy Prompt for External Developer Agent"</em> below.<br>
+        2. Once fixed, run the <strong>Mode 2 Re-test Command</strong>: <code>"Verify ID &lt;OWASP_ID&gt;"</code>.</p>
+      </div>
+    </div>
+
+    <!-- 🔴 1. HIGH PRIORITY QUEUE (FAIL) -->
+    <h2 id="queue-fail">🔴 1. Remediation Queue — High Priority (<code>FAIL</code> / Fully Non-Compliant)</h2>
+
+    <article class="remediation-card fail-card" id="EMB-APPSEC-01">
+      <div class="card-header">
+        <h3 class="card-title">
+          <input type="checkbox">
+          <code>&lt;OWASP_ID&gt;</code> — &lt;Topic Name&gt;
+        </h3>
+        <span class="badge badge-fail">❌ FAIL (Awaiting Remediation)</span>
+      </div>
+      <p><strong>Module (6.2) / Component:</strong> <code>&lt;Ex.: Module 1 / EMB-APPSEC-01 or ISTG-DES-INPV-001&gt;</code></p>
+      <p><strong>📍 Exact Location (File(s) &amp; Line(s)):</strong></p>
+      <ul>
+        <li><a href="file:///abs/path/src/main.c#L42-L48"><code>src/main.c:L42-L48</code></a> — Function <code>parse_uart_cmd()</code>: unbounded <code>strcpy(buf, rx_data)</code> into <code>buf[64]</code>.</li>
+        <li><a href="file:///abs/path/src/network.c#L115"><code>src/network.c:L115</code></a> — Function <code>handle_mqtt_msg()</code>: unbounded <code>sprintf(topic_buf, ...)</code>.</li>
+      </ul>
+      <p><strong>Issue Description:</strong> &lt;Objective explanation of the vulnerability found&gt;</p>
+      <p><strong>What Needs to Be Done (OWASP Acceptance Criteria):</strong> &lt;Exact replacement/fix required at each file and line listed above&gt;</p>
+
+      <div><strong>⚡ Direct Command (Mode 3 — This Agent Remediates + Self-Verifies + Marks PASS):</strong></div>
+      <div class="cmd-block">
+        <span>Remediate OWASP ID &lt;OWASP_ID&gt;</span>
+        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+      </div>
+
+      <div><strong>📋 Ready-to-Copy Prompt for External Developer Agent (Option B — Zero Search Effort):</strong></div>
+      <div class="cmd-block">
+        <span>Fix vulnerability &lt;OWASP_ID&gt; (&lt;Topic Name&gt;) at the following exact files and lines: (1) &lt;file_path_1&gt; lines &lt;X-Y&gt; in function &lt;func_1&gt;, (2) &lt;file_path_2&gt; line &lt;Z&gt; in function &lt;func_2&gt;. Apply the following secure fix: &lt;secure_fix_description&gt;.</span>
+        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+      </div>
+
+      <div><strong>🔍 Standalone Re-test Command (Mode 2 — If fixed externally):</strong></div>
+      <div class="cmd-block">
+        <span>Verify ID &lt;OWASP_ID&gt;</span>
+        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+      </div>
+    </article>
+
+    <!-- 🟡 2. MEDIUM PRIORITY QUEUE (PARTIAL) -->
+    <h2 id="queue-partial">🟡 2. Remediation Queue — Medium Priority (<code>PARTIAL</code> / Partially Compliant)</h2>
+
+    <article class="remediation-card partial-card" id="ISTG-FW[UPDT]-LOGIC-001">
+      <div class="card-header">
+        <h3 class="card-title">
+          <input type="checkbox">
+          <code>&lt;OWASP_ID&gt;</code> — &lt;Topic Name&gt;
+        </h3>
+        <span class="badge badge-partial">⚠️ PARTIAL (Incomplete Mitigation)</span>
+      </div>
+      <p><strong>Module (6.2) / Component:</strong> <code>&lt;Ex.: Module 4 / FW[UPDT]&gt;</code></p>
+      <p><strong>📍 Exact Location (File(s) &amp; Line(s)):</strong></p>
+      <ul>
+        <li><a href="file:///abs/path/src/ota.c#L40-L60"><code>src/ota.c:L40-L60</code></a> — Function <code>verify_ota_header()</code></li>
+        <li><a href="file:///abs/path/sdkconfig#L112"><code>sdkconfig:L112</code></a> — Flag <code>CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK</code> disabled</li>
+      </ul>
+      <p><strong>What Already Exists vs. What is Missing:</strong> &lt;Summary of what is already implemented and what is missing to achieve 100% compliance&gt;</p>
+
+      <div><strong>⚡ Direct Command (Mode 3 — This Agent Remediates + Self-Verifies + Marks PASS):</strong></div>
+      <div class="cmd-block">
+        <span>Remediate OWASP ID &lt;OWASP_ID&gt;</span>
+        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+      </div>
+
+      <div><strong>📋 Ready-to-Copy Prompt for External Developer Agent (Option B — Zero Search Effort):</strong></div>
+      <div class="cmd-block">
+        <span>Complete the implementation of control &lt;OWASP_ID&gt; (&lt;Topic Name&gt;) at exact file &lt;file_path&gt; (lines &lt;X-Y&gt;, function &lt;func_name&gt;): &lt;required_adjustment&gt;.</span>
+        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+      </div>
+
+      <div><strong>🔍 Standalone Re-test Command (Mode 2 — If fixed externally):</strong></div>
+      <div class="cmd-block">
+        <span>Verify ID &lt;OWASP_ID&gt;</span>
+        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+      </div>
+    </article>
+
+    <!-- 🟢 3. HISTORY OF RESOLVED & APPROVED ISSUES (PASS) -->
+    <h2 id="history-pass">🟢 3. History of Resolved &amp; Approved Issues (<code>PASS</code>)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Re-test Timestamp</th>
+          <th>OWASP ID</th>
+          <th>Topic</th>
+          <th>Mode Used</th>
+          <th>Previous Status</th>
+          <th>New Status</th>
+          <th>Validated Fix Evidence</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-resolved-history">
+        <tr>
+          <td><code>&lt;YYYY-MM-DD HH:MM&gt;</code></td>
+          <td><code>&lt;Ex.: ISTG-FW-SCRT-003&gt;</code></td>
+          <td>Usage of Hardcoded Secrets</td>
+          <td><code>Mode 3 (Closed-Loop Verified)</code></td>
+          <td><span class="badge badge-fail">FAIL</span></td>
+          <td><span class="badge badge-pass">PASS</span></td>
+          <td>Secrets removed from <a href="file:///abs/path/config.h"><code>config.h</code></a> and migrated to encrypted NVS.</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script>
+    function copyCmd(btn) {
+      const text = btn.previousElementSibling.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = 'Copied!';
+        setTimeout(() => { btn.innerText = orig; }, 1500);
+      });
+    }
+  </script>
+</body>
+</html>

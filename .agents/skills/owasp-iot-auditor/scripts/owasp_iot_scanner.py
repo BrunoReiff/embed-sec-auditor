@@ -5,7 +5,7 @@ OWASP IoT & Embedded Security Auditor — Helper Scanner Script
 Executes:
 1. General Project Discovery of Artifacts and Technologies
 2. Software Functionalities Classification per Section 6.1 (Step 2 of SKILL.md)
-3. State-Tracking Checklist Inspection/Initialization (where the agent stopped and where to go next)
+3. State-Tracking Checklist Inspection/Initialization (static HTML by default)
 4. Automated Static Triage following strict Section 6.2 order (Modules 1 to 6)
 """
 
@@ -239,26 +239,36 @@ def classify_section_6_1(inventory):
 
 
 def check_checklist_progress(checklist_path: Path):
-    """Step 3: Reads the state-tracking checklist to report where the agent stopped and where it must go next."""
+    """Step 3: Reads the state-tracking checklist (HTML or Markdown) to report where the agent stopped and where it must go next."""
     if not checklist_path.exists():
         return {
             "exists": False,
-            "message": f"Checklist not yet initialized at {checklist_path}. Create it from resources/checklist_template.md.",
+            "message": f"Checklist not yet initialized at {checklist_path}. Create it from resources/checklist_template.html.",
         }
 
     content = checklist_path.read_text(encoding="utf-8", errors="ignore")
+
+    # Match HTML table rows first (<tr><td><code>ID</code></td><td>Name</td><td>Module X</td>...<td><code>STATUS</code></td>)
     rows = re.findall(
-        r"^\|\s*`?((?:ISTG|EMB-APPSEC|FSTM-STAGE)-[A-Z0-9\[\]\-]+)`?\s*\|\s*([^|]+)\|\s*(Modules? [^|]+)\|\s*(?:[^|]+\|\s*)?`?(PASS|PARTIAL|FAIL|N/A|PENDING|OPTIONAL)`?\s*\|",
+        r"<tr>\s*<td><code>((?:ISTG|EMB-APPSEC|FSTM-STAGE)-[A-Z0-9\[\]\-]+)</code></td>\s*<td>([^<]+)</td>\s*<td>(Modules? [^<]+)</td>\s*(?:<td>[^<]*</td>\s*)?<td>(?:<span[^>]*>|<code>)?(PASS|PARTIAL|FAIL|N/A|PENDING|OPTIONAL)(?:</span>|</code>)?</td>",
         content,
-        re.M,
+        re.I,
     )
+
+    # Fallback to Markdown rows if a .md checklist is used
+    if not rows:
+        rows = re.findall(
+            r"^\|\s*`?((?:ISTG|EMB-APPSEC|FSTM-STAGE)-[A-Z0-9\[\]\-]+)`?\s*\|\s*([^|]+)\|\s*(Modules? [^|]+)\|\s*(?:[^|]+\|\s*)?`?(PASS|PARTIAL|FAIL|N/A|PENDING|OPTIONAL)`?\s*\|",
+            content,
+            re.M,
+        )
 
     counts = {"PASS": 0, "PARTIAL": 0, "FAIL": 0, "N/A": 0, "PENDING": 0, "OPTIONAL": 0}
     last_completed = None
     next_pending = None
 
     for test_id, name, modulo, status in rows:
-        norm_status = status.strip()
+        norm_status = status.strip().upper()
         counts[norm_status] = counts.get(norm_status, 0) + 1
         if norm_status not in {"PENDING", "OPTIONAL"}:
             last_completed = f"{test_id} ({modulo.strip()}) -> {norm_status}"
@@ -348,33 +358,34 @@ def run_section_6_2_checks(target_dir: Path):
 def main():
     parser = argparse.ArgumentParser(description="OWASP IoT & Embedded Security Auditor Helper")
     parser.add_argument("--target", default=".", help="Root directory of the embedded/IoT project to scan")
-    parser.add_argument("--checklist", default="owasp_iot_progress_checklist.md", help="Path to the progress checklist file")
-    parser.add_argument("--report", default="owasp_iot_final_report.md", help="Path to the final report file")
-    parser.add_argument("--remediation", default="owasp_iot_remediation_plan.md", help="Path to the remediation plan file")
+    parser.add_argument("--checklist", default="owasp_iot_progress_checklist.html", help="Path to the progress checklist file (default: static HTML)")
+    parser.add_argument("--report", default="owasp_iot_final_report.html", help="Path to the final report file (default: static HTML)")
+    parser.add_argument("--remediation", default="owasp_iot_remediation_plan.html", help="Path to the remediation plan file (default: static HTML)")
     parser.add_argument("--verify-id", default="", help="Mode 2: Specific OWASP ID for targeted re-verification (e.g., ISTG-FW-SCRT-003)")
-    parser.add_argument("--init-checklist", action="store_true", help="Initializes the progress checklist in the project if it does not exist")
-    parser.add_argument("--init-remediation", action="store_true", help="Initializes the remediation plan in the project if it does not exist")
+    parser.add_argument("--init-checklist", action="store_true", help="Initializes the static HTML progress checklist in the project if it does not exist")
+    parser.add_argument("--init-remediation", action="store_true", help="Initializes the static HTML remediation plan in the project if it does not exist")
     args = parser.parse_args()
 
     target_dir = Path(args.target).resolve()
     checklist_path = target_dir / args.checklist
     report_path = target_dir / args.report
     remediation_path = target_dir / args.remediation
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     if args.init_checklist and not checklist_path.exists():
-        template_path = Path(__file__).resolve().parent.parent / "resources" / "checklist_template.md"
+        template_path = Path(__file__).resolve().parent.parent / "resources" / "checklist_template.html"
         if template_path.exists():
             content = template_path.read_text(encoding="utf-8")
-            content = content.replace("<PROJECT_NAME_OR_PATH>", target_dir.name)
-            content = content.replace("<YYYY-MM-DD HH:MM>", datetime.now().strftime("%Y-%m-%d %H:%M"))
+            content = content.replace("&lt;PROJECT_NAME_OR_PATH&gt;", target_dir.name).replace("<PROJECT_NAME_OR_PATH>", target_dir.name)
+            content = content.replace("&lt;YYYY-MM-DD HH:MM&gt;", now_str).replace("<YYYY-MM-DD HH:MM>", now_str)
             checklist_path.write_text(content, encoding="utf-8")
 
     if args.init_remediation and not remediation_path.exists():
-        rem_template_path = Path(__file__).resolve().parent.parent / "resources" / "remediation_tracker_template.md"
+        rem_template_path = Path(__file__).resolve().parent.parent / "resources" / "remediation_tracker_template.html"
         if rem_template_path.exists():
             content = rem_template_path.read_text(encoding="utf-8")
-            content = content.replace("<PROJECT_NAME>", target_dir.name)
-            content = content.replace("<YYYY-MM-DD HH:MM>", datetime.now().strftime("%Y-%m-%d %H:%M"))
+            content = content.replace("&lt;PROJECT_NAME&gt;", target_dir.name).replace("<PROJECT_NAME>", target_dir.name)
+            content = content.replace("&lt;YYYY-MM-DD HH:MM&gt;", now_str).replace("<YYYY-MM-DD HH:MM>", now_str)
             remediation_path.write_text(content, encoding="utf-8")
 
     if args.verify_id.strip():
@@ -391,7 +402,7 @@ def main():
             "remediation_plan_records": find_matches(remediation_path),
             "final_report_records": find_matches(report_path),
             "checklist_records": find_matches(checklist_path),
-            "agent_instruction": f"Surgically inspect the files referenced for {vid}, issue the verdict (PASS/PARTIAL/FAIL), and synchronize owasp_iot_remediation_plan.md, owasp_iot_final_report.md, and owasp_iot_progress_checklist.md."
+            "agent_instruction": f"Surgically inspect the files referenced for {vid}, issue the verdict (PASS/PARTIAL/FAIL), and synchronize owasp_iot_remediation_plan.html, owasp_iot_final_report.html, and owasp_iot_progress_checklist.html."
         }, indent=2, ensure_ascii=False))
         return
 
