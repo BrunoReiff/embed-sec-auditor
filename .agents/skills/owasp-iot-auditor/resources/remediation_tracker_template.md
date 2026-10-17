@@ -1,80 +1,80 @@
-# 🛠️ Plano de Resolução e Reteste Pontual por ID OWASP
+# 🛠️ Remediation & Targeted Re-verification Plan by OWASP ID
 
-**Projeto:** `<NOME_DO_PROJETO>`  
-**Última Atualização:** `<YYYY-MM-DD HH:MM>`  
-**Relatório Vinculado:** `[owasp_iot_relatorio_final.md](./owasp_iot_relatorio_final.md)`  
-**Checklist Vinculado:** `[owasp_iot_checklist_progresso.md](./owasp_iot_checklist_progresso.md)`
-
----
-
-## 💡 Como Usar Este Arquivo para Resolver os Problemas (2 Formas)
-
-Você pode resolver os itens abaixo usando os **IDs OWASP** de duas maneiras:
-
-### Opção A — Pedir para ESTE próprio Agente Solucionar + Verificar em Loop (Modo 3 $\leftrightarrow$ Modo 2 — Recomendado)
-Basta indicar quais IDs OWASP você quer resolver de uma vez:
-> `"Solucione os IDs OWASP <ID_1>, <ID_2> e <ID_3>"` *(ex.: `"Solucione os IDs OWASP ISTG-FW-SCRT-003, EMB-APPSEC-01"`)*
-- O agente no **Modo 3** aplica a correção inicial e aciona o **Modo 2 (Verificador)** (sem assumir `PASS` automaticamente).
-- Se o **Modo 2** detectar que a correção ficou `PARTIAL` (ou `FAIL`), o **Modo 2 chama de volta o Modo 3 passando exatamente o que faltou concluir**, mantendo esse **loop fechado** até o **Modo 2 garantir o `PASS`** e atualizar o relatório!
-
-### Opção B — Corrigir com Outro Agente (ou Manualmente) e Chamar ESTE Agente no Modo 2
-1. Copie o **"Prompt Pronto para Outro Agente Solucionador"** do card abaixo e envie para outro agente implementar.
-2. Depois, chame este Agente Verificador passando apenas o ID OWASP:
-   > `"Verifique o ID <ID_OWASP>"` *(ex.: `"Verifique o ID ISTG-FW-SCRT-003"`)*
-   *(Se a correção externa tiver ficado `PARTIAL`, o Modo 2 apontará exatamente o que faltou e acionará o Modo 3 em loop até garantir o `PASS`!)*
+**Project:** `<PROJECT_NAME>`  
+**Last Updated:** `<YYYY-MM-DD HH:MM>`  
+**Linked Report:** `[owasp_iot_final_report.md](./owasp_iot_final_report.md)`  
+**Linked Checklist:** `[owasp_iot_progress_checklist.md](./owasp_iot_progress_checklist.md)`
 
 ---
 
-## 📊 Painel de Progresso das Resoluções
+## 💡 How to Use This File to Remediate Issues (2 Options)
 
-| Status da Resolução | Quantidade |
+You can resolve the items below using their **OWASP IDs** in two ways:
+
+### Option A — Ask THIS Agent to Remediate + Verify in a Closed Loop (Mode 3 $\leftrightarrow$ Mode 2 — Recommended)
+Simply specify which OWASP IDs you want to resolve at once:
+> `"Remediate OWASP IDs <ID_1>, <ID_2>, and <ID_3>"` *(e.g., `"Remediate OWASP IDs ISTG-FW-SCRT-003, EMB-APPSEC-01"`)*
+- The agent in **Mode 3** applies the initial fix and invokes **Mode 2 (Verifier)** (never assuming `PASS` automatically).
+- If **Mode 2** detects that the fix is `PARTIAL` (or `FAIL`), **Mode 2 invokes Mode 3 back passing the exact missing items**, maintaining this **closed loop** until **Mode 2 guarantees `PASS`** and updates the report!
+
+### Option B — Fix with Another Agent (or Manually) and Invoke THIS Agent in Mode 2
+1. Copy the **"Ready-to-Copy Prompt for External Developer Agent"** from the card below and send it to another agent to implement.
+2. Afterwards, invoke this Verifier Agent passing just the OWASP ID:
+   > `"Verify ID <OWASP_ID>"` *(e.g., `"Verify ID ISTG-FW-SCRT-003"`)*
+   *(If the external fix turns out to be `PARTIAL`, Mode 2 will pinpoint the exact missing items and invoke Mode 3 in a loop until `PASS` is guaranteed!)*
+
+---
+
+## 📊 Remediation Progress Dashboard
+
+| Remediation Status | Count |
 | :--- | :---: |
-| 🔴 **Pendentes de Correção (`FAIL`)** | `<N>` |
-| 🟡 **Pendentes de Ajuste (`PARTIAL`)** | `<N>` |
-| 🔵 **Corrigidos pelo Dev (Aguardando Reteste do Verificador)** | `<N>` |
-| 🟢 **Retestados e Aprovados (`PASS`)** | `<N>` |
+| 🔴 **Pending Remediation (`FAIL`)** | `<N>` |
+| 🟡 **Pending Adjustment (`PARTIAL`)** | `<N>` |
+| 🔵 **Fixed by Dev (Awaiting Verifier Re-test)** | `<N>` |
+| 🟢 **Re-tested and Approved (`PASS`)** | `<N>` |
 
 ---
 
-## 🔴 1. Fila de Resolução — Prioridade Alta (Itens `FAIL` / Totalmente em Desacordo)
+## 🔴 1. Remediation Queue — High Priority (`FAIL` / Fully Non-Compliant Items)
 
-### [ ] `<ID_OWASP>` — `<Nome do Tópico>`
-- **Status Atual:** `❌ FAIL (Aguardando Correção)`
-- **Módulo (6.2) / Componente:** `<Ex.: Módulo 1 / EMB-APPSEC-01 ou ISTG-DES-INPV-001>`
-- **📍 Localização Exata (Arquivo(s) e Linha(s)):**
-  - `[src/main.c:L42-L48](file:///caminho/absoluto/src/main.c#L42-L48)` — Função `parse_uart_cmd()`: uso de `strcpy(buf, rx_data)` sem verificação de limite (`buf[64]`).
-  - `[src/network.c:L115](file:///caminho/absoluto/src/network.c#L115)` — Função `handle_mqtt_msg()`: uso de `sprintf(topic_buf, ...)` sem limite de tamanho.
-- **Descrição da Falha:** `<Explicação objetiva do problema encontrado>`
-- **O que precisa ser feito (Critério de Aceite OWASP):** `<Descrição exata da substituição/correção necessária em cada arquivo e linha listados acima>`
-- ⚡ **Comando Direto (Modo 3 — Este Agente Soluciona + Auto-Verifica + Marca `PASS`):**
-  > `"Solucione o ID OWASP <ID_OWASP>"`
-- 📋 **Prompt Pronto para Outro Agente Solucionador (Caso use a Opção B — Zero Esforço de Busca):**
-  > `"Corrija a vulnerabilidade <ID_OWASP> (<Nome do Tópico>) exatamente nos seguintes arquivos e linhas: (1) <caminho_arquivo_1> linhas <X-Y> na função <func_1>, (2) <caminho_arquivo_2> linha <Z> na função <func_2>. Aplique a seguinte correção: <descrição_da_correção_segura>."`
-- 🔍 **Comando de Reteste Isolado (Modo 2 — Caso já tenha corrigido fora):**
-  > `"Verifique o ID <ID_OWASP>"`
-
----
-
-## 🟡 2. Fila de Resolução — Prioridade Média (Itens `PARTIAL` / Parcialmente de Acordo)
-
-### [ ] `<ID_OWASP>` — `<Nome do Tópico>`
-- **Status Atual:** `⚠️ PARTIAL (Mitigação Incompleta)`
-- **Módulo (6.2) / Componente:** `<Ex.: Módulo 4 / FW[UPDT]>`
-- **📍 Localização Exata (Arquivo(s) e Linha(s)):**
-  - `[src/ota.c:L40-L60](file:///caminho/absoluto/src/ota.c#L40-L60)` — Função `verify_ota_header()`
-  - `[sdkconfig:L112](file:///caminho/absoluto/sdkconfig#L112)` — Flag `CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK` desativada
-- **O que já existe vs. O que falta:** `<Resumo do que já foi feito e do que falta para ficar 100% de acordo>`
-- ⚡ **Comando Direto (Modo 3 — Este Agente Soluciona + Auto-Verifica + Marca `PASS`):**
-  > `"Solucione o ID OWASP <ID_OWASP>"`
-- 📋 **Prompt Pronto para Outro Agente Solucionador (Caso use a Opção B — Zero Esforço de Busca):**
-  > `"Complete a implementação do controle <ID_OWASP> (<Nome do Tópico>) exatamente no arquivo <caminho_do_arquivo> (linhas <X-Y>, função <nome_funcao>): <ajuste_necessario>."`
-- 🔍 **Comando de Reteste Isolado (Modo 2 — Caso já tenha corrigido fora):**
-  > `"Verifique o ID <ID_OWASP>"`
+### [ ] `<OWASP_ID>` — `<Topic Name>`
+- **Current Status:** `❌ FAIL (Awaiting Remediation)`
+- **Module (6.2) / Component:** `<Ex.: Module 1 / EMB-APPSEC-01 or ISTG-DES-INPV-001>`
+- **📍 Exact Location (File(s) & Line(s)):**
+  - `[src/main.c:L42-L48](file:///abs/path/src/main.c#L42-L48)` — Function `parse_uart_cmd()`: unbounded `strcpy(buf, rx_data)` into `buf[64]`.
+  - `[src/network.c:L115](file:///abs/path/src/network.c#L115)` — Function `handle_mqtt_msg()`: unbounded `sprintf(topic_buf, ...)`.
+- **Issue Description:** `<Objective explanation of the vulnerability found>`
+- **What Needs to Be Done (OWASP Acceptance Criteria):** `<Exact description of the replacement/fix required at each file and line listed above>`
+- ⚡ **Direct Command (Mode 3 — This Agent Remediates + Self-Verifies + Marks `PASS`):**
+  > `"Remediate OWASP ID <OWASP_ID>"`
+- 📋 **Ready-to-Copy Prompt for External Developer Agent (Option B — Zero Search Effort):**
+  > `"Fix vulnerability <OWASP_ID> (<Topic Name>) at the following exact files and lines: (1) <file_path_1> lines <X-Y> in function <func_1>, (2) <file_path_2> line <Z> in function <func_2>. Apply the following secure fix: <secure_fix_description>."`
+- 🔍 **Standalone Re-test Command (Mode 2 — If fixed externally):**
+  > `"Verify ID <OWASP_ID>"`
 
 ---
 
-## 🟢 3. Histórico de Problemas Resolvidos e Aprovados no Reteste (`PASS`)
+## 🟡 2. Remediation Queue — Medium Priority (`PARTIAL` / Partially Compliant Items)
 
-| Data/Hora do Reteste | ID OWASP | Tópico | Modo Utilizado | Status Anterior | Novo Status | Evidência da Correção Validada |
+### [ ] `<OWASP_ID>` — `<Topic Name>`
+- **Current Status:** `⚠️ PARTIAL (Incomplete Mitigation)`
+- **Module (6.2) / Component:** `<Ex.: Module 4 / FW[UPDT]>`
+- **📍 Exact Location (File(s) & Line(s)):**
+  - `[src/ota.c:L40-L60](file:///abs/path/src/ota.c#L40-L60)` — Function `verify_ota_header()`
+  - `[sdkconfig:L112](file:///abs/path/sdkconfig#L112)` — Flag `CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK` disabled
+- **What Already Exists vs. What is Missing:** `<Summary of what is already implemented and what is missing to achieve 100% compliance>`
+- ⚡ **Direct Command (Mode 3 — This Agent Remediates + Self-Verifies + Marks `PASS`):**
+  > `"Remediate OWASP ID <OWASP_ID>"`
+- 📋 **Ready-to-Copy Prompt for External Developer Agent (Option B — Zero Search Effort):**
+  > `"Complete the implementation of control <OWASP_ID> (<Topic Name>) at exact file <file_path> (lines <X-Y>, function <func_name>): <required_adjustment>."`
+- 🔍 **Standalone Re-test Command (Mode 2 — If fixed externally):**
+  > `"Verify ID <OWASP_ID>"`
+
+---
+
+## 🟢 3. History of Resolved & Approved Issues (`PASS`)
+
+| Re-test Timestamp | OWASP ID | Topic | Mode Used | Previous Status | New Status | Validated Fix Evidence |
 | :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| `<YYYY-MM-DD HH:MM>` | `<Ex.: ISTG-FW-SCRT-003>` | Uso de Segredos Hardcoded | `Modo 3 (Auto-Verificado)` | `❌ FAIL` | `✅ PASS` | Segredos removidos de `[config.h](file:///caminho)` e migrados para NVS criptografada. |
+| `<YYYY-MM-DD HH:MM>` | `<Ex.: ISTG-FW-SCRT-003>` | Usage of Hardcoded Secrets | `Mode 3 (Closed-Loop Verified)` | `❌ FAIL` | `✅ PASS` | Secrets removed from `[config.h](file:///path)` and migrated to encrypted NVS. |

@@ -1,128 +1,127 @@
-# 🛡️ OWASP IoT Auditor — Agente de Segurança para Sistemas Embarcados e IoT
+# 🛡️ EmbedSec Auditor — OWASP IoT & Embedded Security Agent
 
-Agente de IA (Skill + Rule) que **audita, retesta e corrige** vulnerabilidades em projetos embarcados/IoT com base na metodologia OWASP unificada:
+An AI Agent (Skill + Rule) that **audits, re-verifies, and remediates** vulnerabilities in embedded systems and IoT ecosystems using a unified OWASP methodology:
 
-- **OWASP ISTG** — IoT Security Testing Guide (86 casos de teste)
-- **OWASP Embedded Application Security** — boas práticas de código embarcado
-- **OWASP FSTM** — Firmware Security Testing Methodology *(opcional)*
+- **OWASP ISTG** — IoT Security Testing Guide (86 test cases)
+- **OWASP Embedded Application Security** — embedded code best practices (10 domains + threat modeling)
+- **OWASP FSTM** — Firmware Security Testing Methodology *(optional, on-demand)*
 - **OWASP ISVS** — IoT Security Verification Standard
 
-Funciona com ESP-IDF, Arduino, PlatformIO, FreeRTOS, Zephyr, Linux embarcado (Yocto/Buildroot/OpenWrt), bare-metal, além de backends/brokers (MQTT, REST, CoAP) e painéis web.
+Supports ESP-IDF, Arduino, PlatformIO, FreeRTOS, Zephyr, Embedded Linux (Yocto/Buildroot/OpenWrt), bare-metal firmware, as well as data exchange backends/brokers (MQTT, REST, CoAP, WebSockets) and web/mobile interfaces.
 
 ---
 
-## 📦 Estrutura do repositório
+## 📦 Repository Structure
 
 ```text
-.agents/                              ← núcleo do agente
+.agents/                              ← Agent core
 ├── rules/
-│   └── owasp-iot-agent-rule.md       ← regra "always_on": define os 3 modos de chamada
+│   └── owasp-iot-agent-rule.md       ← "always_on" rule defining the 3 invocation modes
 └── skills/owasp-iot-auditor/
-    ├── SKILL.md                      ← instruções completas do agente
+    ├── SKILL.md                      ← Complete agent operational instructions
     ├── references/
-    │   └── verification_rules.md     ← critérios técnicos/regex por módulo
+    │   └── verification_rules.md     ← Technical inspection criteria & regexes per module
     ├── resources/
-    │   ├── checklist_template.md     ← checklist de estado (ISTG + EmbeddedAppSec + FSTM)
-    │   ├── report_template.md        ← relatório final "zero scroll"
-    │   └── remediation_tracker_template.md ← plano de resolução por ID OWASP
+    │   ├── checklist_template.md     ← State-tracking checklist (ISTG + EmbeddedAppSec + FSTM)
+    │   ├── report_template.md        ← "Zero-scroll" compliance report template
+    │   └── remediation_tracker_template.md ← Remediation & re-verification plan by OWASP ID
     └── scripts/
-        ├── owasp_iot_scanner.ps1     ← sondagem/triagem (Windows)
-        └── owasp_iot_scanner.py      ← sondagem/triagem (Linux/macOS)
-IOT_OWASP/                            ← apenas FONTE (git submodules dos repositórios oficiais OWASP)
+        ├── owasp_iot_scanner.ps1     ← Discovery & triage helper script (Windows PowerShell)
+        └── owasp_iot_scanner.py      ← Discovery & triage helper script (Linux / macOS / Python)
+IOT_OWASP/                            ← Upstream reference sources (git submodules of official OWASP repos)
 ├── embeddedappsec/
 ├── owasp-fstm/
 └── owasp-istg/
 ```
 
 > [!NOTE]
-> A pasta `IOT_OWASP/` serve só como material de referência de onde os checklists foram consolidados. O agente funciona sem ela — todo o conteúdo necessário já está em `.agents/`.
+> The `IOT_OWASP/` folder serves strictly as upstream reference material from which the checklists and rules were consolidated. The agent operates standalone—everything required at runtime is inside `.agents/`.
 
 ---
 
-## 🚀 Instalação
+## 🚀 Installation
 
 ```bash
-git clone --recurse-submodules https://github.com/<seu-usuario>/<este-repo>.git
+git clone --recurse-submodules https://github.com/BrunoReiff/embed-sec-auditor.git
 ```
 
-Escolha uma das formas:
+Choose how to install the agent:
 
-| Escopo | Como instalar |
+| Scope | Installation Steps |
 | :--- | :--- |
-| **Por projeto** | Copie a pasta `.agents/` para a raiz do projeto embarcado que será auditado. |
-| **Global (todas as máquinas/projetos)** | Copie `.agents/skills/owasp-iot-auditor` → `~/.gemini/config/skills/` e `.agents/rules/owasp-iot-agent-rule.md` → `~/.gemini/config/rules/`. |
+| **Per-Project (Workspace)** | Copy the `.agents/` folder into the root directory of the embedded/IoT project you want to audit. |
+| **Global (All Projects)** | Copy `.agents/skills/owasp-iot-auditor` → `~/.gemini/config/skills/` and `.agents/rules/owasp-iot-agent-rule.md` → `~/.gemini/config/rules/`. |
 
-Compatível com agentes que leem o padrão `.agents/` (Skills + Rules), como o Google Antigravity.
+Compatible with AI coding assistants that support the `.agents/` customization standard (Skills + Rules), such as Google Antigravity.
 
 ---
 
-## 🧭 Como usar — os 3 modos
+## 🧭 Usage — The 3 Operational Modes
 
-| Modo | Para quê | Exemplo de prompt |
+| Mode | Purpose | Example Prompt |
 | :--- | :--- | :--- |
-| **1 — Auditoria completa** | Mapear o projeto inteiro e gerar relatório + plano de correção | *"Audite este projeto com a skill owasp-iot-auditor"* |
-| **2 — Verificação por ID** | Retestar um item específico (juiz estrito) | *"Verifique o ID `ISTG-FW-SCRT-003`"* |
-| **3 — Resolução por ID** | Corrigir itens específicos com verificação automática | *"Solucione os IDs `EMB-APPSEC-01` e `ISTG-DES-CRYPT-001`"* |
+| **Mode 1 — Full / Incremental Audit** | Map the entire project, run the 6 test modules, and generate the Final Report + Remediation Plan | *"Audit this project with the owasp-iot-auditor skill"* |
+| **Mode 2 — Targeted ID Verification** | Re-test specific OWASP IDs as a strict compliance judge | *"Verify ID `ISTG-FW-SCRT-003`"* or *"Re-test `EMB-APPSEC-01`"* |
+| **Mode 3 — Targeted ID Remediation** | Fix specific OWASP IDs with automated closed-loop verification | *"Remediate OWASP IDs `EMB-APPSEC-01` and `ISTG-DES-CRYPT-001`"* |
 
-> Para incluir os 9 estágios do **FSTM** (extração/emulação de firmware), peça explicitamente: *"...incluindo a Parte C (FSTM)"*.
+> To include the 9 stages of **OWASP FSTM** (binary extraction, emulation, and runtime analysis), explicitly ask: *"...including Part C (FSTM)"*.
 
 ---
 
-## ⚙️ Como o agente opera
+## ⚙️ How the Agent Operates
 
-### Modo 1 — Auditoria completa (5 etapas)
+### Mode 1 — Full / Incremental Audit (5 Steps)
 
-1. **Sondagem** — inventaria linguagens, RTOS/SDK, hardware, build, criptografia e protocolos (com apoio do script `owasp_iot_scanner`).
-2. **Classificação de escopo (Seção 6.1)** — enquadra o projeto em 4 categorias (Firmware · Build/Imagem · Backend/Broker · UI/Web/Mobile) e marca o que não se aplica como `N/A`.
-3. **Checklist de estado** — cria/retoma `owasp_iot_checklist_progresso.md`, que registra **onde o agente parou e para onde vai**. Auditorias longas podem ser retomadas a qualquer momento.
-4. **Testes em ordem fixa (Seção 6.2)** — 6 módulos, sempre registrando **arquivo e linha exatos** de cada achado:
-   1. SAST embarcado e memória (funções banidas, injeção, stack overflow)
-   2. Segredos, identidade e criptografia (hardcoded secrets, TLS/mTLS, armazenamento seguro)
-   3. Hardening de build, bootloader e binários (flags, Secure Boot, JTAG, logs UART)
-   4. Atualização de firmware/OTA (assinatura, transporte seguro, anti-rollback)
-   5. Serviços de dados e lógica de negócio (ACL MQTT, anti-replay, rate-limit)
-   6. SBOM e dependências (versões fixadas, CVEs)
-5. **Saída** — gera dois arquivos no projeto auditado:
-   - `owasp_iot_relatorio_final.md` — relatório "zero scroll": **FAIL primeiro**, depois PARTIAL, PASS e N/A, com índice clicável.
-   - `owasp_iot_plano_resolucao.md` — um card por falha com local exato, prompt pronto para correção e comando de reteste.
+1. **General Project Discovery** — Inventories programming languages, RTOS/OS/SDKs, hardware interfaces, build systems, cryptographic libraries, and network/wireless protocols (assisted by `owasp_iot_scanner`).
+2. **Scope Classification (Section 6.1)** — Classifies the project across 4 functional categories (*Firmware/Embedded Code*, *Build System/Firmware Image*, *Backend/Broker/Data Services*, *Web/Mobile/User & Physical Interfaces*) and marks out-of-scope components as `N/A`.
+3. **State-Tracking Checklist** — Initializes or resumes `owasp_iot_progress_checklist.md`, tracking **where the agent stopped and where it must go next** so large audits can be paused and resumed seamlessly.
+4. **Sequential Testing (Section 6.2)** — Executes 6 test modules in strict order, always recording the **exact file(s) and line number(s)** (`[file:L10-L20](file:///path#L10-L20)`) of every finding:
+   1. **Module 1:** Embedded SAST & Memory Quality (banned C/C++ functions, command/code injection, RAM hygiene, stack overflow)
+   2. **Module 2:** Secrets, Identity & Cryptography (hardcoded secrets, `.gitignore` rules, TLS/mTLS validation, secure storage, sessions & privacy)
+   3. **Module 3:** Build, Bootloader & Binary Hardening (compiler flags, Secure Boot, Flash Encryption, JTAG/UART lockdown, surface reduction)
+   4. **Module 4:** Firmware Update Lifecycle / OTA (`ISTG-FW[UPDT]` — authentication, asymmetric signatures, encrypted distribution, anti-rollback)
+   5. **Module 5:** Data Exchange Services & Business Logic (`ISTG-DES` — per-device auth, MQTT ACLs, anti-replay, rate limiting, LWT)
+   6. **Module 6:** SBOM & Third-Party Dependencies (pinned versions, CISA/ISVS minimum elements, CVE checks)
+5. **Zero-Scroll Output + Remediation Plan** — Generates two complementary files in the audited project:
+   - `owasp_iot_final_report.md` — **Zero-scroll** compliance report strictly grouped by status (**`FAIL` first**, then `PARTIAL`, `PASS`, and `N/A`) with a clickable quick-navigation index at the top.
+   - `owasp_iot_remediation_plan.md` — Actionable task cards for every `FAIL` and `PARTIAL` item with exact file/line locations, ready-to-copy prompts for external developer agents, and one-line re-verification commands.
 
-### Modos 2 ⇄ 3 — Loop fechado de correção
+### Mode 2 ⇄ Mode 3 — Closed-Loop Remediation & Verification
 
 ```mermaid
 flowchart LR
-    U(["Usuário: Solucione o ID X"]) --> M3["Modo 3: aplica a correção nos arquivos/linhas mapeados"]
-    M3 --> M2{"Modo 2: verificação estrita"}
-    M2 -->|"PARTIAL / FAIL + o que faltou"| M3
-    M2 -->|"PASS garantido"| OK["Atualiza relatório, plano e checklist"]
+    U(["User: Remediate ID X"]) --> M3["Mode 3: Applies fix at exact mapped files & lines"]
+    M3 --> M2{"Mode 2: Strict compliance judge"}
+    M2 -->|"PARTIAL / FAIL + exact missing items"| M3
+    M2 -->|"100% PASS guaranteed"| OK["Promotes to PASS across Report, Plan & Checklist"]
 ```
 
-- O **Modo 3 nunca marca `PASS`** sozinho — sempre entrega ao Modo 2.
-- O **Modo 2 nunca assume `PASS`** — se faltar algo, devolve ao Modo 3 a lista exata do que falta (arquivo/linha).
-- O loop se repete até o Modo 2 garantir 100% de conformidade. Só então os 3 arquivos são atualizados.
+- **Mode 3 never self-approves (`PASS`)** — After applying a fix, it immediately invokes Mode 2 to audit the change.
+- **Mode 2 never assumes `PASS` automatically** — If a fix is incomplete (`PARTIAL` or `FAIL`), Mode 2 records **exact missing items (files & lines)** and invokes Mode 3 back.
+- The **closed loop (`Mode 3` ⇄ `Mode 2`)** repeats until Mode 2 guarantees 100% compliance (`PASS`) and synchronizes all three tracking files.
 
 ---
 
-## 🔧 Scripts auxiliares (uso manual opcional)
+## 🔧 Helper Scripts (Optional Manual Execution)
 
 ```powershell
-# Windows
-powershell -ExecutionPolicy Bypass -File .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.ps1 -TargetDir <projeto> -InitChecklist
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.ps1 -TargetDir <project_path> -InitChecklist
 ```
 
 ```bash
-# Linux / macOS
-python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <projeto> --init-checklist
+# Linux / macOS (Python 3)
+python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <project_path> --init-checklist
 ```
 
-Use `-VerifyId <ID>` / `--verify-id <ID>` para localizar rapidamente um ID nos arquivos de saída.
+Use `-VerifyId <OWASP_ID>` / `--verify-id <OWASP_ID>` to quickly locate all occurrences of a specific ID across the tracking files during Mode 2 re-verification.
 
 ---
 
-## ⚠️ Aviso
+## ⚠️ Disclaimer
 
-A análise é majoritariamente estática (código, configuração e build). Ela não substitui um pentest com acesso ao hardware físico. Use somente em projetos que você tem autorização para avaliar.
+This agent primarily performs static and configuration analysis (source code, build configs, manifests, and firmware artifacts). It complements—but does not replace—physical hardware penetration testing (e.g., live fault injection or side-channel oscilloscopes). Use only on projects and devices you are authorized to test.
 
-## 📚 Créditos
+## 📚 Credits
 
-Metodologia baseada nos projetos oficiais da OWASP: [ISTG](https://github.com/OWASP/owasp-istg), [Embedded AppSec](https://github.com/scriptingxss/embeddedappsec) e [FSTM](https://github.com/scriptingxss/owasp-fstm). Consulte as licenças originais em cada submódulo.
-
+Methodology built upon official OWASP projects: [OWASP ISTG](https://github.com/OWASP/owasp-istg), [OWASP Embedded Application Security](https://github.com/scriptingxss/embeddedappsec), and [OWASP FSTM](https://github.com/scriptingxss/owasp-fstm). See each submodule for its respective license.

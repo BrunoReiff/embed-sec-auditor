@@ -2,17 +2,17 @@
 .SYNOPSIS
     OWASP IoT & Embedded Security Auditor - Helper Scanner Script (PowerShell)
 .DESCRIPTION
-    Executes the 4 automated support phases for the Agent:
-    1. General Project Probe of Artifacts and Technologies
-    2. Software Functionalities Classification per Section 6.1 (SKILL.md, Etapa 2)
-    3. State Checklist Inspection/Initialization (where the agent stopped and where to go next)
+    Executes the 4 automated support steps for the Agent:
+    1. General Project Discovery of Artifacts and Technologies
+    2. Software Functionalities Classification per Section 6.1 (SKILL.md, Step 2)
+    3. State-Tracking Checklist Inspection/Initialization (where the agent stopped and where to go next)
     4. Automated Static Triage following strict Section 6.2 order (Modules 1 to 6)
 #>
 param(
     [string]$TargetDir = ".",
-    [string]$ChecklistFile = "owasp_iot_checklist_progresso.md",
-    [string]$ReportFile = "owasp_iot_relatorio_final.md",
-    [string]$RemediationFile = "owasp_iot_plano_resolucao.md",
+    [string]$ChecklistFile = "owasp_iot_progress_checklist.md",
+    [string]$ReportFile = "owasp_iot_final_report.md",
+    [string]$RemediationFile = "owasp_iot_remediation_plan.md",
     [string]$VerifyId = "",
     [switch]$InitChecklist,
     [switch]$InitRemediation
@@ -30,7 +30,7 @@ if ($InitChecklist -and -not (Test-Path $ChecklistPath)) {
         $Content = Get-Content -Path $TemplatePath -Raw -Encoding UTF8
         $ProjectName = Split-Path $ResolvedTarget -Leaf
         $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-        $Content = $Content.Replace("<NOME_OU_CAMINHO_DO_PROJETO>", $ProjectName).Replace("<YYYY-MM-DD HH:MM>", $Timestamp)
+        $Content = $Content.Replace("<PROJECT_NAME_OR_PATH>", $ProjectName).Replace("<YYYY-MM-DD HH:MM>", $Timestamp)
         Set-Content -Path $ChecklistPath -Value $Content -Encoding UTF8
     }
 }
@@ -41,7 +41,7 @@ if ($InitRemediation -and -not (Test-Path $RemediationPath)) {
         $RemContent = Get-Content -Path $RemTemplatePath -Raw -Encoding UTF8
         $ProjectName = Split-Path $ResolvedTarget -Leaf
         $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
-        $RemContent = $RemContent.Replace("<NOME_DO_PROJETO>", $ProjectName).Replace("<YYYY-MM-DD HH:MM>", $Timestamp)
+        $RemContent = $RemContent.Replace("<PROJECT_NAME>", $ProjectName).Replace("<YYYY-MM-DD HH:MM>", $Timestamp)
         Set-Content -Path $RemediationPath -Value $RemContent -Encoding UTF8
     }
 }
@@ -64,15 +64,15 @@ if (-not [string]::IsNullOrWhiteSpace($VerifyId)) {
         })
     }
 
-    $Modo2Result = [ordered]@{
-        Modo = "Modo 2 - Reteste Pontual por ID OWASP"
-        IdSolicitado = $TargetId
-        RegistrosNoPlanoDeResolucao = $RemediationMatches
-        RegistrosNoRelatorioFinal = $ReportMatches
-        RegistrosNoChecklist = $ChecklistMatches
-        InstrucaoAgente = "Inspecione cirurgicamente os arquivos citados para $TargetId, emita o veredito (PASS/PARTIAL/FAIL) e sincronize owasp_iot_plano_resolucao.md, owasp_iot_relatorio_final.md e owasp_iot_checklist_progresso.md."
+    $Mode2Result = [ordered]@{
+        Mode = "Mode 2 - Targeted Single-ID Verification"
+        RequestedId = $TargetId
+        RemediationPlanRecords = $RemediationMatches
+        FinalReportRecords = $ReportMatches
+        ChecklistRecords = $ChecklistMatches
+        AgentInstruction = "Surgically inspect the files referenced for $TargetId, issue the verdict (PASS/PARTIAL/FAIL), and synchronize owasp_iot_remediation_plan.md, owasp_iot_final_report.md, and owasp_iot_progress_checklist.md."
     }
-    $Modo2Result | ConvertTo-Json -Depth 5
+    $Mode2Result | ConvertTo-Json -Depth 5
     exit 0
 }
 
@@ -205,20 +205,20 @@ foreach ($f in $AllFiles) {
     }
 }
 
-# Etapa 2: Classificacao Secao 6.1
+# Step 2: Section 6.1 Classification
 $HasFw = ($EmbeddedFiles.Count -gt 0) -or ($RtosSdk.Count -gt 0)
 $HasBuild = ($BuildFiles.Count -gt 0)
 $HasDes = ($BackendFiles.Count -gt 0) -or ($Protocols.Count -gt 0)
 $HasUi = ($UiFiles.Count -gt 0)
 $HasWrls = ($HwInterfaces | Where-Object { $_ -match "WRLS" }).Count -gt 0
 
-# Etapa 3: Estado do Checklist
+# Step 3: Checklist State
 $ChecklistStatus = [ordered]@{
-    Existe = (Test-Path $ChecklistPath)
-    Caminho = $ChecklistPath
-    OndeParou = "Nenhum item concluido ainda (Inicio da Auditoria)"
-    ParaOndeDeveIr = "Inicializar checklist (-InitChecklist) e iniciar Modulo 1 (SAST Embarcado & Qualidade de Memoria)"
-    Contagem = [ordered]@{ PASS = 0; PARTIAL = 0; FAIL = 0; NA = 0; PENDENTE = 0; OPCIONAL = 0 }
+    Exists = (Test-Path $ChecklistPath)
+    Path = $ChecklistPath
+    WhereAgentStopped = "No items completed yet (Start of Audit)"
+    WhereAgentMustGoNext = "Initialize checklist (-InitChecklist) and start Module 1 (Embedded SAST & Memory Quality)"
+    Counts = [ordered]@{ PASS = 0; PARTIAL = 0; FAIL = 0; NA = 0; PENDING = 0; OPTIONAL = 0 }
 }
 
 if (Test-Path $ChecklistPath) {
@@ -226,24 +226,24 @@ if (Test-Path $ChecklistPath) {
     $LastDone = $null
     $NextPending = $null
     foreach ($line in $ChkLines) {
-        if ($line -match '^\|\s*`?((?:ISTG|EMB-APPSEC|FSTM-STAGE)-[A-Z0-9\[\]\-]+)`?\s*\|\s*([^|]+)\|\s*(M.dulo [^|]+)\|\s*(?:[^|]+\|\s*)?`?(PASS|PARTIAL|FAIL|N/A|PENDENTE|OPCIONAL)`?\s*\|') {
+        if ($line -match '^\|\s*`?((?:ISTG|EMB-APPSEC|FSTM-STAGE)-[A-Z0-9\[\]\-]+)`?\s*\|\s*([^|]+)\|\s*(Modules? [^|]+)\|\s*(?:[^|]+\|\s*)?`?(PASS|PARTIAL|FAIL|N/A|PENDING|OPTIONAL)`?\s*\|') {
             $Tid = $Matches[1].Trim()
             $Tname = $Matches[2].Trim()
             $Tmod = $Matches[3].Trim()
             $Tstat = $Matches[4].Trim()
-            if ($Tstat -eq "N/A") { $ChecklistStatus.Contagem.NA++ }
-            else { $ChecklistStatus.Contagem[$Tstat]++ }
+            if ($Tstat -eq "N/A") { $ChecklistStatus.Counts.NA++ }
+            else { $ChecklistStatus.Counts[$Tstat]++ }
 
-            if ($Tstat -notin @("PENDENTE", "OPCIONAL")) {
+            if ($Tstat -notin @("PENDING", "OPTIONAL")) {
                 $LastDone = "$Tid ($Tmod) -> $Tstat"
-            } elseif ($Tstat -eq "PENDENTE" -and $null -eq $NextPending) {
+            } elseif ($Tstat -eq "PENDING" -and $null -eq $NextPending) {
                 $NextPending = "$Tid ($Tmod - $Tname)"
             }
         }
     }
-    if ($LastDone) { $ChecklistStatus.OndeParou = $LastDone }
-    if ($NextPending) { $ChecklistStatus.ParaOndeDeveIr = $NextPending }
-    else { $ChecklistStatus.ParaOndeDeveIr = "Todos os itens obrigatorios concluidos! Pronto para gerar o Relatorio Final (Etapa 5)." }
+    if ($LastDone) { $ChecklistStatus.WhereAgentStopped = $LastDone }
+    if ($NextPending) { $ChecklistStatus.WhereAgentMustGoNext = $NextPending }
+    else { $ChecklistStatus.WhereAgentMustGoNext = "All mandatory items completed! Ready to generate the Final Report (Step 5)." }
 }
 
 $FwMods = if ($HasFw) { @("ISTG-FW", "ISTG-MEM", "ISTG-PROC", "ISTG-INT[UART/I2C]", "Embedded AppSec") } else { @() }
@@ -254,37 +254,36 @@ if ($HasUi) { $UiMods += "ISTG-UI" }
 if ($HasWrls) { $UiMods += "ISTG-WRLS" }
 
 $OutputObj = [ordered]@{
-    Etapa1_SondagemGeral = [ordered]@{
-        TotalArquivosAnalisados = $AllFiles.Count
-        ArquivosCodigoEmbarcado = $EmbeddedFiles.Count
-        ArquivosBuildEFirmware = $BuildFiles.Count
-        ArquivosBackendServicos = $BackendFiles.Count
-        ArquivosInterfaceUI = $UiFiles.Count
-        TecnologiasDetectadas = [ordered]@{
+    Step1_GeneralDiscovery = [ordered]@{
+        TotalFilesScanned = $AllFiles.Count
+        EmbeddedCodeFiles = $EmbeddedFiles.Count
+        BuildAndFirmwareFiles = $BuildFiles.Count
+        BackendServiceFiles = $BackendFiles.Count
+        UiInterfaceFiles = $UiFiles.Count
+        DetectedTechnologies = [ordered]@{
             RTOS_OS_SDK = @($RtosSdk)
-            SistemasDeBuild = @($BuildSys)
-            BibliotecasCripto = @($CryptoLibs)
-            ProtocolosEServicos = @($Protocols)
-            InterfacesHardware = @($HwInterfaces)
-            Armazenamento = @($StorageFs)
+            BuildSystems = @($BuildSys)
+            CryptoLibraries = @($CryptoLibs)
+            ProtocolsAndServices = @($Protocols)
+            HardwareInterfaces = @($HwInterfaces)
+            Storage = @($StorageFs)
         }
     }
-    Etapa2_ClassificacaoSecao6_1 = [ordered]@{
-        "1_Firmware_Codigo_Embarcado" = [ordered]@{ Ativo = $HasFw; ModulosAtivados = $FwMods }
-        "2_Sistema_Build_Imagem_Firmware" = [ordered]@{ Ativo = $HasBuild; ModulosAtivados = $BuildMods }
-        "3_Backend_Broker_Servicos_Dados" = [ordered]@{ Ativo = $HasDes; ModulosAtivados = $DesMods }
-        "4_Aplicacao_Web_Painel_Mobile" = [ordered]@{ Ativo = ($HasUi -or $HasWrls); ModulosAtivados = $UiMods }
+    Step2_Section6_1Classification = [ordered]@{
+        "1_Firmware_Embedded_Code" = [ordered]@{ Active = $HasFw; ActivatedModules = $FwMods }
+        "2_Build_System_Firmware_Image" = [ordered]@{ Active = $HasBuild; ActivatedModules = $BuildMods }
+        "3_Backend_Broker_Data_Services" = [ordered]@{ Active = $HasDes; ActivatedModules = $DesMods }
+        "4_Web_App_Dashboard_Mobile" = [ordered]@{ Active = ($HasUi -or $HasWrls); ActivatedModules = $UiMods }
     }
-    Etapa3_EstadoDoChecklist = $ChecklistStatus
-    Etapa4_TriagemSecao6_2 = [ordered]@{
-        Modulo1_SAST_e_Memoria = $Mod1Findings
-        Modulo2_Segredos_Identidade_Cripto = $Mod2Findings
-        Modulo3_Hardening_Build_Bootloader_UART = $Mod3Findings
-        Modulo4_Atualizacao_Firmware_OTA = $Mod4Findings
-        Modulo5_Servicos_Troca_Dados_Logica = $Mod5Findings
-        Modulo6_SBOM_e_Dependencias = $Mod6Findings
+    Step3_ChecklistState = $ChecklistStatus
+    Step4_Section6_2Triage = [ordered]@{
+        Module1_SAST_and_Memory = $Mod1Findings
+        Module2_Secrets_Identity_Crypto = $Mod2Findings
+        Module3_Hardening_Build_Bootloader_UART = $Mod3Findings
+        Module4_Firmware_Update_OTA = $Mod4Findings
+        Module5_Data_Exchange_Services_Logic = $Mod5Findings
+        Module6_SBOM_and_Dependencies = $Mod6Findings
     }
 }
 
 $OutputObj | ConvertTo-Json -Depth 6
-

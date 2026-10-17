@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 OWASP IoT & Embedded Security Auditor — Helper Scanner Script
-Executa:
-1. Sondagem Geral de Artefatos e Tecnologias do Projeto Embarcado/IoT
-2. Classificação das Funcionalidades conforme a Seção 6.1 (Etapa 2 do SKILL.md)
-3. Verificação/Inicialização do Checklist de Estado (onde o agente parou e para onde deve ir)
-4. Triagem automatizada seguindo a ordem estrita da Seção 6.2 (Módulos 1 a 6)
+Executes:
+1. General Project Discovery of Artifacts and Technologies
+2. Software Functionalities Classification per Section 6.1 (Step 2 of SKILL.md)
+3. State-Tracking Checklist Inspection/Initialization (where the agent stopped and where to go next)
+4. Automated Static Triage following strict Section 6.2 order (Modules 1 to 6)
 """
 
 import argparse
@@ -39,7 +39,7 @@ SOURCE_EXTS = {
 
 
 def scan_project_artifacts(target_dir: Path):
-    """Etapa 1: Sondagem geral do projeto e detecção de artefatos e tecnologias."""
+    """Step 1: General project discovery and detection of artifacts and technologies."""
     inventory = {
         "files_by_ext": {},
         "total_files_scanned": 0,
@@ -185,7 +185,7 @@ def scan_project_artifacts(target_dir: Path):
 
 
 def classify_section_6_1(inventory):
-    """Etapa 2: Classifica as funcionalidades do software com a Seção 6.1 do metodologia_owasp_iot_agente.md."""
+    """Step 2: Classifies software functionalities per Section 6.1 (Step 2 of SKILL.md)."""
     has_fw = len(inventory["embedded_code_files"]) > 0 or len(inventory["detected_technologies"]["rtos_os_sdk"]) > 0
     has_build = len(inventory["build_and_firmware_files"]) > 0
     has_des = (
@@ -198,38 +198,38 @@ def classify_section_6_1(inventory):
     has_i2c = "I2C" in inventory["detected_technologies"]["hardware_interfaces"]
 
     classification = {
-        "6.1.1_firmware_codigo_embarcado": {
-            "ativo": has_fw,
-            "artefatos_contagem": len(inventory["embedded_code_files"]),
-            "exemplos": inventory["embedded_code_files"][:10],
-            "modulos_ativados": (
-                ["ISTG-FW", "ISTG-FW[INST]", "ISTG-FW[UPDT]", "ISTG-MEM", "ISTG-PROC", "Embedded AppSec (10 domínios)"]
+        "6.1.1_firmware_embedded_code": {
+            "active": has_fw,
+            "artifact_count": len(inventory["embedded_code_files"]),
+            "examples": inventory["embedded_code_files"][:10],
+            "activated_modules": (
+                ["ISTG-FW", "ISTG-FW[INST]", "ISTG-FW[UPDT]", "ISTG-MEM", "ISTG-PROC", "Embedded AppSec (10 domains)"]
                 + (["ISTG-INT[UART]"] if has_uart else [])
                 + (["ISTG-INT[I2C]"] if has_i2c else [])
             ) if has_fw else [],
         },
-        "6.1.2_sistema_build_imagem_firmware": {
-            "ativo": has_build,
-            "artefatos_contagem": len(inventory["build_and_firmware_files"]),
-            "exemplos": inventory["build_and_firmware_files"][:10],
-            "modulos_ativados": [
-                "ISTG-FW-INFO-004 (Hardening Compilação)",
-                "ISTG-FW-CONF-002 (Superfície Mínima)",
+        "6.1.2_build_system_firmware_image": {
+            "active": has_build,
+            "artifact_count": len(inventory["build_and_firmware_files"]),
+            "examples": inventory["build_and_firmware_files"][:10],
+            "activated_modules": [
+                "ISTG-FW-INFO-004 (Compiler Hardening)",
+                "ISTG-FW-CONF-002 (Minimal Surface)",
                 "ISTG-FW[INST]-CRYPT-001 (Bootloader)",
                 "ISTG-FW-CONF-001 (SBOM)",
             ] if has_build else [],
         },
-        "6.1.3_backend_broker_servicos_dados": {
-            "ativo": has_des,
-            "artefatos_contagem": len(inventory["backend_service_files"]),
-            "exemplos": inventory["backend_service_files"][:10],
-            "modulos_ativados": ["ISTG-DES (Serviços de Troca de Dados)"] if has_des else [],
+        "6.1.3_backend_broker_data_services": {
+            "active": has_des,
+            "artifact_count": len(inventory["backend_service_files"]),
+            "examples": inventory["backend_service_files"][:10],
+            "activated_modules": ["ISTG-DES (Data Exchange Services)"] if has_des else [],
         },
-        "6.1.4_aplicacao_web_painel_mobile_interfaces": {
-            "ativo": has_ui or has_wrls,
-            "artefatos_contagem": len(inventory["ui_frontend_files"]),
-            "exemplos": inventory["ui_frontend_files"][:10],
-            "modulos_ativados": (
+        "6.1.4_web_app_dashboard_mobile_interfaces": {
+            "active": has_ui or has_wrls,
+            "artifact_count": len(inventory["ui_frontend_files"]),
+            "examples": inventory["ui_frontend_files"][:10],
+            "activated_modules": (
                 (["ISTG-UI"] if has_ui else [])
                 + (["ISTG-WRLS"] if has_wrls else [])
             ),
@@ -239,75 +239,68 @@ def classify_section_6_1(inventory):
 
 
 def check_checklist_progress(checklist_path: Path):
-    """Etapa 3: Lê o checklist guia para informar onde o agente parou e para onde deve ir."""
+    """Step 3: Reads the state-tracking checklist to report where the agent stopped and where it must go next."""
     if not checklist_path.exists():
         return {
             "exists": False,
-            "message": f"Checklist ainda não inicializado em {checklist_path}. Deve ser criado a partir de resources/checklist_template.md.",
+            "message": f"Checklist not yet initialized at {checklist_path}. Create it from resources/checklist_template.md.",
         }
 
     content = checklist_path.read_text(encoding="utf-8", errors="ignore")
     rows = re.findall(
-        r"^\|\s*`?((?:ISTG|EMB-APPSEC|FSTM-STAGE)-[A-Z0-9\[\]\-]+)`?\s*\|\s*([^|]+)\|\s*(Módulo [^|]+)\|\s*(?:[^|]+\|\s*)?`?(PASS|PARTIAL|FAIL|N/A|PENDENTE|OPCIONAL|DE ACORDO|PARCIALMENTE DE ACORDO|EM DESACORDO)`?\s*\|",
+        r"^\|\s*`?((?:ISTG|EMB-APPSEC|FSTM-STAGE)-[A-Z0-9\[\]\-]+)`?\s*\|\s*([^|]+)\|\s*(Modules? [^|]+)\|\s*(?:[^|]+\|\s*)?`?(PASS|PARTIAL|FAIL|N/A|PENDING|OPTIONAL)`?\s*\|",
         content,
         re.M,
     )
 
-    counts = {"PASS": 0, "PARTIAL": 0, "FAIL": 0, "N/A": 0, "PENDENTE": 0, "OPCIONAL": 0}
+    counts = {"PASS": 0, "PARTIAL": 0, "FAIL": 0, "N/A": 0, "PENDING": 0, "OPTIONAL": 0}
     last_completed = None
     next_pending = None
 
     for test_id, name, modulo, status in rows:
         norm_status = status.strip()
-        if norm_status in {"DE ACORDO", "PASS"}:
-            norm_status = "PASS"
-        elif norm_status in {"PARCIALMENTE DE ACORDO", "PARTIAL"}:
-            norm_status = "PARTIAL"
-        elif norm_status in {"EM DESACORDO", "FAIL"}:
-            norm_status = "FAIL"
-
         counts[norm_status] = counts.get(norm_status, 0) + 1
-        if norm_status not in {"PENDENTE", "OPCIONAL"}:
+        if norm_status not in {"PENDING", "OPTIONAL"}:
             last_completed = f"{test_id} ({modulo.strip()}) -> {norm_status}"
-        elif norm_status == "PENDENTE" and next_pending is None:
+        elif norm_status == "PENDING" and next_pending is None:
             next_pending = f"{test_id} ({modulo.strip()} - {name.strip()})"
 
     return {
         "exists": True,
         "checklist_path": str(checklist_path),
         "summary_counts": counts,
-        "onde_o_agente_parou": last_completed or "Nenhum item concluído ainda (Início da Auditoria)",
-        "para_onde_o_agente_deve_ir": next_pending or "Todos os itens do checklist foram concluídos! Pronto para gerar o Relatório Final.",
+        "where_agent_stopped": last_completed or "No items completed yet (Start of Audit)",
+        "where_agent_must_go_next": next_pending or "All mandatory checklist items completed! Ready to generate the Final Report.",
     }
 
 
 def run_section_6_2_checks(target_dir: Path):
-    """Etapa 4: Executa verificações estáticas seguindo a ordem estrita dos 6 módulos da Seção 6.2."""
+    """Step 4: Executes static checks following the strict order of the 6 modules of Section 6.2."""
     findings = {
-        "Modulo_1_SAST_e_Memoria": [],
-        "Modulo_2_Segredos_Identidade_Criptografia": [],
-        "Modulo_3_Hardening_Build_Bootloader_Binarios": [],
-        "Modulo_4_Atualizacao_Firmware_OTA": [],
-        "Modulo_5_Servicos_Troca_Dados_Logica": [],
-        "Modulo_6_SBOM_e_Dependencias": [],
+        "Module_1_SAST_and_Memory": [],
+        "Module_2_Secrets_Identity_Cryptography": [],
+        "Module_3_Hardening_Build_Bootloader_Binaries": [],
+        "Module_4_Firmware_Update_OTA": [],
+        "Module_5_Data_Exchange_Services_Logic": [],
+        "Module_6_SBOM_and_Dependencies": [],
     }
 
     rules = [
-        # Módulo 1
-        ("Modulo_1_SAST_e_Memoria", "ISTG-*-INPV-001 / EMB-APPSEC-01", "Função C/C++ insegura para manipulação de buffer", re.compile(r"\b(gets|strcpy|strcat|sprintf|vsprintf)\s*\("), {".c", ".cpp", ".cc", ".h", ".hpp", ".ino"}),
-        ("Modulo_1_SAST_e_Memoria", "EMB-APPSEC-01", "Possível mau uso de strncpy/strncat com strlen", re.compile(r"\b(strncpy|strncat)\s*\([^;]*strlen\s*\("), {".c", ".cpp", ".cc", ".h", ".hpp", ".ino"}),
-        ("Modulo_1_SAST_e_Memoria", "ISTG-*-INPV-002 / EMB-APPSEC-02", "Execução de comando/processo externo (risco de Command Injection)", re.compile(r"\b(system|popen|execlp|execvp|os\.system|child_process\.exec|eval)\s*\("), {".c", ".cpp", ".py", ".js", ".ts", ".lua", ".php"}),
-        # Módulo 2
-        ("Modulo_2_Segredos_Identidade_Criptografia", "ISTG-FW-SCRT-003 / EMB-APPSEC-04", "Possível segredo/credencial hardcoded", re.compile(r"(?:WIFI_PASS|MQTT_PASS|PASSWORD|SECRET|API_KEY|PRIVATE_KEY)\s*[:=]\s*[\"'][^\"']{3,}[\"']|-----BEGIN (?:RSA )?PRIVATE KEY-----", re.I), SOURCE_EXTS),
-        ("Modulo_2_Segredos_Identidade_Criptografia", "ISTG-*-CRYPT-001 / EMB-APPSEC-08", "Validação de certificado TLS desabilitada", re.compile(r"\b(setInsecure\s*\(\)|MBEDTLS_SSL_VERIFY_NONE|rejectUnauthorized\s*:\s*false|CURLOPT_SSL_VERIFYPEER\s*,\s*0)\b"), SOURCE_EXTS),
-        ("Modulo_2_Segredos_Identidade_Criptografia", "ISTG-*-CRYPT-001", "Uso de algoritmo criptográfico ou hash fraco (MD5/SHA1/DES/RC4/ECB)", re.compile(r"\b(MD5|SHA1|DES|3DES|RC4|AES_ECB|ECB_MODE)\b"), SOURCE_EXTS),
-        # Módulo 3
-        ("Modulo_3_Hardening_Build_Bootloader_Binarios", "ISTG-INT[UART]-INFO-002", "Log serial detectado (verificar se expõe segredos/UIDs/tokens na UART)", re.compile(r"\b(Serial\.print|Serial\.println|Serial\.printf|ESP_LOG[IWDVE])\s*\([^)]*(?:pass|key|token|secret|uid|hash|pin)", re.I), {".c", ".cpp", ".h", ".hpp", ".ino"}),
-        ("Modulo_3_Hardening_Build_Bootloader_Binarios", "ISTG-FW-INFO-004 / EMB-APPSEC-06", "Flag de hardening de compilação ou Secure Boot/Flash Encryption presente", re.compile(r"(-fstack-protector|-fPIE|-D_FORTIFY_SOURCE|CONFIG_SECURE_BOOT|CONFIG_SECURE_FLASH_ENC|CONFIG_ENABLE_VBOOT|CONFIG_FIT_SIGNATURE)"), {".txt", ".ini", ".mk", ".cmake", ""}),
-        # Módulo 4
-        ("Modulo_4_Atualizacao_Firmware_OTA", "ISTG-FW[UPDT]-*", "Rotina ou configuração de atualização de firmware (OTA) detectada", re.compile(r"\b(esp_https_ota|esp_ota_begin|ArduinoOTA|HTTPUpdate|Update\.begin|CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK)\b"), SOURCE_EXTS),
-        # Módulo 5
-        ("Modulo_5_Servicos_Troca_Dados_Logica", "ISTG-DES-AUTHZ-001", "Configuração de acesso anônimo ou tópico MQTT wildcard", re.compile(r"\b(allow_anonymous\s+true)\b|subscribe\s*\(\s*[\"']#[\"']"), SOURCE_EXTS),
+        # Module 1
+        ("Module_1_SAST_and_Memory", "ISTG-*-INPV-001 / EMB-APPSEC-01", "Unsafe C/C++ buffer manipulation function", re.compile(r"\b(gets|strcpy|strcat|sprintf|vsprintf)\s*\("), {".c", ".cpp", ".cc", ".h", ".hpp", ".ino"}),
+        ("Module_1_SAST_and_Memory", "EMB-APPSEC-01", "Potential misuse of strncpy/strncat bounded by strlen", re.compile(r"\b(strncpy|strncat)\s*\([^;]*strlen\s*\("), {".c", ".cpp", ".cc", ".h", ".hpp", ".ino"}),
+        ("Module_1_SAST_and_Memory", "ISTG-*-INPV-002 / EMB-APPSEC-02", "External command/process execution (Command Injection risk)", re.compile(r"\b(system|popen|execlp|execvp|os\.system|child_process\.exec|eval)\s*\("), {".c", ".cpp", ".py", ".js", ".ts", ".lua", ".php"}),
+        # Module 2
+        ("Module_2_Secrets_Identity_Cryptography", "ISTG-FW-SCRT-003 / EMB-APPSEC-04", "Potential hardcoded secret/credential", re.compile(r"(?:WIFI_PASS|MQTT_PASS|PASSWORD|SECRET|API_KEY|PRIVATE_KEY)\s*[:=]\s*[\"'][^\"']{3,}[\"']|-----BEGIN (?:RSA )?PRIVATE KEY-----", re.I), SOURCE_EXTS),
+        ("Module_2_Secrets_Identity_Cryptography", "ISTG-*-CRYPT-001 / EMB-APPSEC-08", "TLS certificate validation disabled", re.compile(r"\b(setInsecure\s*\(\)|MBEDTLS_SSL_VERIFY_NONE|rejectUnauthorized\s*:\s*false|CURLOPT_SSL_VERIFYPEER\s*,\s*0)\b"), SOURCE_EXTS),
+        ("Module_2_Secrets_Identity_Cryptography", "ISTG-*-CRYPT-001", "Weak cryptographic algorithm or hash usage (MD5/SHA1/DES/RC4/ECB)", re.compile(r"\b(MD5|SHA1|DES|3DES|RC4|AES_ECB|ECB_MODE)\b"), SOURCE_EXTS),
+        # Module 3
+        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-INT[UART]-INFO-002", "Serial log detected (verify if it leaks secrets/UIDs/tokens over UART)", re.compile(r"\b(Serial\.print|Serial\.println|Serial\.printf|ESP_LOG[IWDVE])\s*\([^)]*(?:pass|key|token|secret|uid|hash|pin)", re.I), {".c", ".cpp", ".h", ".hpp", ".ino"}),
+        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-FW-INFO-004 / EMB-APPSEC-06", "Compiler hardening or Secure Boot/Flash Encryption flag present", re.compile(r"(-fstack-protector|-fPIE|-D_FORTIFY_SOURCE|CONFIG_SECURE_BOOT|CONFIG_SECURE_FLASH_ENC|CONFIG_ENABLE_VBOOT|CONFIG_FIT_SIGNATURE)"), {".txt", ".ini", ".mk", ".cmake", ""}),
+        # Module 4
+        ("Module_4_Firmware_Update_OTA", "ISTG-FW[UPDT]-*", "Firmware update (OTA) routine or configuration detected", re.compile(r"\b(esp_https_ota|esp_ota_begin|ArduinoOTA|HTTPUpdate|Update\.begin|CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK)\b"), SOURCE_EXTS),
+        # Module 5
+        ("Module_5_Data_Exchange_Services_Logic", "ISTG-DES-AUTHZ-001", "Anonymous broker access or wildcard MQTT topic subscription", re.compile(r"\b(allow_anonymous\s+true)\b|subscribe\s*\(\s*[\"']#[\"']"), SOURCE_EXTS),
     ]
 
     for root, dirs, files in os.walk(target_dir):
@@ -322,11 +315,11 @@ def run_section_6_2_checks(target_dir: Path):
             ext = fpath.suffix.lower()
 
             if fname in {"package.json", "requirements.txt", "platformio.ini", "idf_component.yml"}:
-                findings["Modulo_6_SBOM_e_Dependencias"].append({
+                findings["Module_6_SBOM_and_Dependencies"].append({
                     "id": "ISTG-*-CONF-001 / EMB-APPSEC-10",
                     "file": rel_path,
                     "line": 1,
-                    "description": f"Manifesto de dependências detectado ({fname}) para geração de SBOM e auditoria de CVEs.",
+                    "description": f"Dependency manifest detected ({fname}) for SBOM generation and CVE audit.",
                 })
 
             if ext not in SOURCE_EXTS and fname.lower() not in {"sdkconfig", "cmakelists.txt", "makefile", "platformio.ini"}:
@@ -354,13 +347,13 @@ def run_section_6_2_checks(target_dir: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="OWASP IoT & Embedded Security Auditor Helper")
-    parser.add_argument("--target", default=".", help="Diretório raiz do projeto embarcado/IoT a ser sondado")
-    parser.add_argument("--checklist", default="owasp_iot_checklist_progresso.md", help="Caminho do arquivo de checklist de progresso")
-    parser.add_argument("--report", default="owasp_iot_relatorio_final.md", help="Caminho do arquivo de relatório final")
-    parser.add_argument("--remediation", default="owasp_iot_plano_resolucao.md", help="Caminho do plano de resolução")
-    parser.add_argument("--verify-id", default="", help="Modo 2: ID OWASP específico para reteste pontual (ex.: ISTG-FW-SCRT-003)")
-    parser.add_argument("--init-checklist", action="store_true", help="Inicializa o checklist de progresso no projeto caso não exista")
-    parser.add_argument("--init-remediation", action="store_true", help="Inicializa o plano de resolução no projeto caso não exista")
+    parser.add_argument("--target", default=".", help="Root directory of the embedded/IoT project to scan")
+    parser.add_argument("--checklist", default="owasp_iot_progress_checklist.md", help="Path to the progress checklist file")
+    parser.add_argument("--report", default="owasp_iot_final_report.md", help="Path to the final report file")
+    parser.add_argument("--remediation", default="owasp_iot_remediation_plan.md", help="Path to the remediation plan file")
+    parser.add_argument("--verify-id", default="", help="Mode 2: Specific OWASP ID for targeted re-verification (e.g., ISTG-FW-SCRT-003)")
+    parser.add_argument("--init-checklist", action="store_true", help="Initializes the progress checklist in the project if it does not exist")
+    parser.add_argument("--init-remediation", action="store_true", help="Initializes the remediation plan in the project if it does not exist")
     args = parser.parse_args()
 
     target_dir = Path(args.target).resolve()
@@ -372,7 +365,7 @@ def main():
         template_path = Path(__file__).resolve().parent.parent / "resources" / "checklist_template.md"
         if template_path.exists():
             content = template_path.read_text(encoding="utf-8")
-            content = content.replace("<NOME_OU_CAMINHO_DO_PROJETO>", target_dir.name)
+            content = content.replace("<PROJECT_NAME_OR_PATH>", target_dir.name)
             content = content.replace("<YYYY-MM-DD HH:MM>", datetime.now().strftime("%Y-%m-%d %H:%M"))
             checklist_path.write_text(content, encoding="utf-8")
 
@@ -380,7 +373,7 @@ def main():
         rem_template_path = Path(__file__).resolve().parent.parent / "resources" / "remediation_tracker_template.md"
         if rem_template_path.exists():
             content = rem_template_path.read_text(encoding="utf-8")
-            content = content.replace("<NOME_DO_PROJETO>", target_dir.name)
+            content = content.replace("<PROJECT_NAME>", target_dir.name)
             content = content.replace("<YYYY-MM-DD HH:MM>", datetime.now().strftime("%Y-%m-%d %H:%M"))
             remediation_path.write_text(content, encoding="utf-8")
 
@@ -393,12 +386,12 @@ def main():
             return [{"line": i + 1, "text": ln.strip()} for i, ln in enumerate(lines) if vid in ln]
 
         print(json.dumps({
-            "modo": "Modo 2 - Reteste Pontual por ID OWASP",
-            "id_solicitado": vid,
-            "registros_no_plano_resolucao": find_matches(remediation_path),
-            "registros_no_relatorio_final": find_matches(report_path),
-            "registros_no_checklist": find_matches(checklist_path),
-            "instrucao_agente": f"Inspecione cirurgicamente os arquivos citados para {vid}, emita o veredito (PASS/PARTIAL/FAIL) e sincronize owasp_iot_plano_resolucao.md, owasp_iot_relatorio_final.md e owasp_iot_checklist_progresso.md."
+            "mode": "Mode 2 - Targeted Single-ID Verification",
+            "requested_id": vid,
+            "remediation_plan_records": find_matches(remediation_path),
+            "final_report_records": find_matches(report_path),
+            "checklist_records": find_matches(checklist_path),
+            "agent_instruction": f"Surgically inspect the files referenced for {vid}, issue the verdict (PASS/PARTIAL/FAIL), and synchronize owasp_iot_remediation_plan.md, owasp_iot_final_report.md, and owasp_iot_progress_checklist.md."
         }, indent=2, ensure_ascii=False))
         return
 
@@ -408,10 +401,10 @@ def main():
     checks_6_2 = run_section_6_2_checks(target_dir)
 
     report_output = {
-        "etapa_1_sondagem_geral": inventory,
-        "etapa_2_classificacao_secao_6_1": classification,
-        "etapa_3_estado_do_checklist": progress,
-        "etapa_4_triagem_secao_6_2": checks_6_2,
+        "step_1_general_discovery": inventory,
+        "step_2_section_6_1_classification": classification,
+        "step_3_checklist_state": progress,
+        "step_4_section_6_2_triage": checks_6_2,
     }
 
     print(json.dumps(report_output, indent=2, ensure_ascii=False))
@@ -419,5 +412,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

@@ -1,51 +1,50 @@
 ---
 trigger: always_on
-description: Regras operacionais obrigatórias do Agente Auditor e Solucionador de Segurança OWASP IoT & Embarcados (3 Modos de Chamada)
+description: Mandatory operational rules for the OWASP IoT & Embedded Security Auditor and Remediator Agent (3 Invocation Modes)
 ---
 
-# Regra Operacional do Agente Auditor OWASP IoT & Embarcados
+# Operational Rule — OWASP IoT & Embedded Security Auditor Agent
 
-Ao analisar, auditar, retestar ou solucionar vulnerabilidades em qualquer projeto embarcado / IoT, utilize a skill [`owasp-iot-auditor`](../skills/owasp-iot-auditor/SKILL.md) operando em um dos **3 modos de chamada**:
-
----
-
-## Modo 1: Auditoria Completa / Incremental do Projeto
-
-Quando o usuário pedir para auditar o projeto, siga rigorosamente esta sequência:
-
-1. **Sondagem Geral do Projeto:** Verifique todos os artefatos e tecnologias presentes no projeto embarcado (código-fonte, RTOS/OS, SDKs, protocolos de rede/rádio, interfaces físicas/internas, arquivos de build e binários).
-2. **Classificação de Funcionalidades (Seção 6.1):** Classifique os componentes encontrados nas 4 categorias da **Seção 6.1** (Etapa 2 de [`SKILL.md`](../skills/owasp-iot-auditor/SKILL.md)) para ativar os módulos correspondentes.
-3. **Checklist como Guia de Estado (Onde Parou e Para Onde Deve Ir):** Utilize o checklist consolidado a partir dos repositórios clonados (`IOT_OWASP/owasp-istg/checklists/checklist.md` e `IOT_OWASP/embeddedappsec`, sendo a **Parte C — `IOT_OWASP/owasp-fstm` estritamente opcional e executada somente se o usuário pedir**) em [`checklist_template.md`](../skills/owasp-iot-auditor/resources/checklist_template.md) (instanciado como `owasp_iot_checklist_progresso.md`) para registrar e consultar em tempo real onde o agente parou e qual o próximo passo.
-4. **Execução Sequencial de Testes (Ordem da Seção 6.2) com Localização Exata (`Arquivo(s)` e `Linha(s)`):** Execute todas as verificações seguindo estritamente a ordem dos **Módulos 1 a 6 da Seção 6.2** (Etapa 4 de [`SKILL.md`](../skills/owasp-iot-auditor/SKILL.md)). No **Módulo 1** (e em todos os módulos do Modo 1), o agente **DEVE obrigatoriamente registrar em qual(is) arquivo(s) e/ou linha(s) exata(s)** (`[arquivo:L10-L20](file:///caminho#L10-L20)`) cada vulnerabilidade se encontra, minimizando o esforço do agente que irá solucionar o problema.
-5. **Relatório de Saída (Zero Scroll) + Plano de Resolução (`owasp_iot_plano_resolucao.md`):**
-   - **Relatório (`owasp_iot_relatorio_final.md` baseado em [`report_template.md`](../skills/owasp-iot-auditor/resources/report_template.md)):** Agrupado **estritamente pelo status do resultado** (proibido misturar `PASS`, `PARTIAL` e `FAIL` na mesma tabela), indicando o(s) arquivo(s) e linha(s) exata(s) de cada apontamento, com **links de navegação rápida no topo** e seguindo esta ordem de seções:
-     - **⚡ Índice de Navegação Rápida** (com contagem e links âncora clicáveis)
-     - **❌ Seção 1: Tópicos TOTALMENTE EM DESACORDO com as normas (`FAIL` — Não passaram no teste)** *(sempre em primeiro lugar)*
-     - **⚠️ Seção 2: Tópicos PARCIALMENTE DE ACORDO com as normas (`PARTIAL`)**
-     - **✅ Seção 3: Tópicos DE ACORDO com as normas (`PASS`)**
-     - **⚪ Seção 4: Tópicos Não Aplicáveis (`N/A`)**
-     - **🔍 Seção 5: Sondagem Geral e Classificação (Seção 6.1)**
-   - **Plano de Resolução (`owasp_iot_plano_resolucao.md` baseado em [`remediation_tracker_template.md`](../skills/owasp-iot-auditor/resources/remediation_tracker_template.md)):** Arquivo para o usuário organizar a correção de cada item `FAIL`/`PARTIAL` (já contendo a lista exata de todos os arquivos e linhas afetadas para o agente solucionador ir direto ao ponto) e acionar o Modo 2 ou Modo 3 pelo `ID OWASP`.
+When analyzing, auditing, re-verifying, or remediating vulnerabilities in any embedded system or IoT project, use the [`owasp-iot-auditor`](../skills/owasp-iot-auditor/SKILL.md) skill operating in one of the **3 invocation modes**:
 
 ---
 
-## Modo 2: Verificação Pontual / Reteste por ID OWASP (`Targeted ID Re-verification`)
+## Mode 1: Full / Incremental Project Audit
 
-Quando o usuário (ou o Modo 3) chamar o agente no **Modo 2** para **verificar / retestar** um ou mais IDs OWASP específicos (ex.: *"Verifique o ID `ISTG-FW-SCRT-003`"*, *"Reteste `EMB-APPSEC-01`"*):
+When the user asks to audit a project, strictly follow this sequence:
 
-1. **NÃO execute a auditoria completa novamente:** Vá direto ao `ID OWASP` solicitado consultando `owasp_iot_plano_resolucao.md`, `owasp_iot_relatorio_final.md` e [`verification_rules.md`](../skills/owasp-iot-auditor/references/verification_rules.md).
-2. **Verificação Cirúrgica Estrita (Proibido Assumir `PASS` Automaticamente):** Inspecione todos os arquivos/linhas e controles referentes àquela vulnerabilidade para validar se a correção atende 100% às normas OWASP (`PASS`, `PARTIAL` ou `FAIL`).
-3. **Loop Obrigatório `Modo 2` $\rightarrow$ `Modo 3` se Ficar `PARTIAL` ou `FAIL`:**
-   - **Se a verificação resultar em `⚠️ PARTIAL` (ou continuar `❌ FAIL`):** O Modo 2 **NÃO** promove para `PASS`. Ele atualiza o status intermediário para `PARTIAL`/`FAIL` nos arquivos registrando **exatamente o que faltou concluir** (com `Arquivo(s)` e `Linha(s)` exatas da pendência) e **chama imediatamente o Modo 3 (Agente Solucionador)** passando o que faltou concluir. Esse **loop (`Modo 2` $\leftrightarrow$ `Modo 3`) repete-se** até que o **Modo 2** comprove que 100% dos requisitos foram cumpridos e **garanta o `PASS`**.
-   - **Somente quando o Modo 2 garantir `✅ PASS`:** Atualize o status do `ID OWASP` nos 3 arquivos (`owasp_iot_plano_resolucao.md`, `owasp_iot_relatorio_final.md` — movendo o item da tabela `FAIL`/`PARTIAL` para `✅ PASS` — e `owasp_iot_checklist_progresso.md`).
+1. **General Project Discovery:** Inspect all artifacts and technologies present in the embedded/IoT project (source code, RTOS/OS, SDKs, network/wireless protocols, physical/internal hardware interfaces, build files, and binaries).
+2. **Functionality Classification (Section 6.1):** Classify the discovered components across the 4 categories of **Section 6.1** (Step 2 of [`SKILL.md`](../skills/owasp-iot-auditor/SKILL.md)) to activate the corresponding checklist modules.
+3. **State-Tracking Checklist (Where the Agent Stopped & Where to Go Next):** Use the consolidated checklist derived from the upstream repositories (`IOT_OWASP/owasp-istg/checklists/checklist.md` and `IOT_OWASP/embeddedappsec`, with **Part C — `IOT_OWASP/owasp-fstm` strictly optional and executed only if explicitly requested by the user**) in [`checklist_template.md`](../skills/owasp-iot-auditor/resources/checklist_template.md) (instantiated as `owasp_iot_progress_checklist.md`) to record and query in real time where the agent stopped and what the next step is.
+4. **Sequential Test Execution (Section 6.2 Order) with Exact Location (`File(s)` and `Line(s)`):** Execute all checks strictly following the order of **Modules 1 to 6 of Section 6.2** (Step 4 of [`SKILL.md`](../skills/owasp-iot-auditor/SKILL.md)). In **Module 1** (and across all modules in Mode 1), the agent **MUST mandatorily record the exact file(s) and line number(s)** (`[file:L10-L20](file:///path#L10-L20)`) where each vulnerability resides, minimizing the effort required by the remediating agent.
+5. **Zero-Scroll Output Report + Remediation Plan (`owasp_iot_remediation_plan.md`):**
+   - **Final Report (`owasp_iot_final_report.md` based on [`report_template.md`](../skills/owasp-iot-auditor/resources/report_template.md)):** Grouped **strictly by compliance status** (never mix `PASS`, `PARTIAL`, and `FAIL` in the same table), indicating the exact file(s) and line(s) of every finding, featuring **quick-navigation anchor links at the top**, and following this exact section order:
+     - **⚡ Quick Navigation Index** (with item counts and clickable anchor links)
+     - **❌ Section 1: Topics FULLY NON-COMPLIANT with standards (`FAIL` — Failed tests)** *(always placed first)*
+     - **⚠️ Section 2: Topics PARTIALLY COMPLIANT with standards (`PARTIAL`)**
+     - **✅ Section 3: Topics FULLY COMPLIANT with standards (`PASS`)**
+     - **⚪ Section 4: Not Applicable Topics (`N/A`)**
+     - **🔍 Section 5: General Discovery & Scope Classification (Section 6.1)**
+   - **Remediation Plan (`owasp_iot_remediation_plan.md` based on [`remediation_tracker_template.md`](../skills/owasp-iot-auditor/resources/remediation_tracker_template.md)):** Actionable file for organizing the remediation of each `FAIL`/`PARTIAL` item (containing the exact list of affected files and lines so the remediating agent can jump straight to the code) and triggering Mode 2 or Mode 3 by `OWASP ID`.
 
 ---
 
-## Modo 3: Resolução + Loop de Verificação por ID OWASP (`Targeted ID Remediation & Closed-Loop Verification`)
+## Mode 2: Targeted Single-ID Verification / Re-test (`Targeted ID Re-verification`)
 
-Quando o usuário (ou o Modo 2) chamar o agente no **Modo 3** para **solucionar / corrigir / resolver** um ou mais IDs OWASP específicos (ex.: *"Solucione os IDs OWASP `ISTG-FW-SCRT-003`, `EMB-APPSEC-01` e `ISTG-DES-CRYPT-001`"*):
+When the user (or Mode 3) invokes the agent in **Mode 2** to **verify / re-test** one or more specific OWASP IDs (e.g., *"Verify ID `ISTG-FW-SCRT-003`"*, *"Re-test `EMB-APPSEC-01`"*):
 
-1. **Foco Exclusivo nos IDs Solicitados (ou no que Faltou Concluir):** Localize os arquivos e linhas exatas dos IDs OWASP informados em `owasp_iot_plano_resolucao.md` e `owasp_iot_relatorio_final.md` (ou a lista do **que faltou concluir** recebida do Modo 2), consulte [`verification_rules.md`](../skills/owasp-iot-auditor/references/verification_rules.md) e implemente a correção diretamente nos arquivos afetados, sem alterar partes não relacionadas do projeto. **O Modo 3 nunca marca `PASS` por conta própria.**
-2. **Acionamento Obrigatório do Modo 2 e Loop até Garantir `PASS`:** Imediatamente após aplicar a correção, **chame o Modo 2** (via subagente `self` ou execução estrita do protocolo do Modo 2) para auditar a mudança. Se o **Modo 2** classificar como `PARTIAL` ou `FAIL`, o **Modo 2 chamará de volta o Modo 3** passando exatamente o que faltou concluir, mantendo esse **loop fechado (`Modo 3` $\leftrightarrow$ `Modo 2`)** até o **Modo 2 garantir o `✅ PASS`**.
-3. **Promoção para `PASS` Exclusiva pelo Modo 2:** Somente após o **Modo 2** validar e garantir `✅ PASS` é que os IDs solucionados são movidos de `FAIL`/`PARTIAL` para `✅ PASS` em `owasp_iot_relatorio_final.md`, marcados como `[x] Retestado e Aprovado (PASS)` em `owasp_iot_plano_resolucao.md` e atualizados em `owasp_iot_checklist_progresso.md`.
+1. **DO NOT re-run the full audit:** Go straight to the requested `OWASP ID` by consulting `owasp_iot_remediation_plan.md`, `owasp_iot_final_report.md`, and [`verification_rules.md`](../skills/owasp-iot-auditor/references/verification_rules.md).
+2. **Strict Surgical Verification (Never Assume `PASS` Automatically):** Inspect all files, lines, and controls related to that vulnerability to validate whether the fix satisfies 100% of the OWASP criteria (`PASS`, `PARTIAL`, or `FAIL`).
+3. **Mandatory Closed Loop `Mode 2` $\rightarrow$ `Mode 3` if `PARTIAL` or `FAIL`:**
+   - **If verification results in `⚠️ PARTIAL` (or remains `❌ FAIL`):** Mode 2 **DOES NOT** promote the item to `PASS`. It updates the intermediate status to `PARTIAL`/`FAIL` across the tracking files, recording **exact missing items** (with exact `File(s)` and `Line(s)` of the remaining gap), and **immediately invokes Mode 3 (Remediator Agent)** passing what still needs to be completed. This **loop (`Mode 2` $\leftrightarrow$ `Mode 3`) repeats** until **Mode 2** confirms 100% of the requirements are met and **guarantees `PASS`**.
+   - **Only when Mode 2 guarantees `✅ PASS`:** Update the status of the `OWASP ID` across all 3 files (`owasp_iot_remediation_plan.md`, `owasp_iot_final_report.md` — moving the item from the `FAIL`/`PARTIAL` table to `✅ PASS` — and `owasp_iot_progress_checklist.md`).
 
+---
+
+## Mode 3: Targeted ID Remediation & Closed-Loop Verification (`Targeted ID Remediation & Closed-Loop Verification`)
+
+When the user (or Mode 2) invokes the agent in **Mode 3** to **remediate / fix / resolve** one or more specific OWASP IDs (e.g., *"Remediate OWASP IDs `ISTG-FW-SCRT-003`, `EMB-APPSEC-01`, and `ISTG-DES-CRYPT-001`"*):
+
+1. **Exclusive Focus on the Requested IDs (or Remaining Delta):** Locate the exact files and lines for the specified OWASP IDs in `owasp_iot_remediation_plan.md` and `owasp_iot_final_report.md` (or the list of **remaining missing items** received from Mode 2), consult [`verification_rules.md`](../skills/owasp-iot-auditor/references/verification_rules.md), and implement the fix directly in the affected files without altering unrelated parts of the project. **Mode 3 never marks `PASS` on its own.**
+2. **Mandatory Invocation of Mode 2 and Loop Until `PASS` is Guaranteed:** Immediately after applying the fix, **invoke Mode 2** (via the `self` subagent or by strictly executing the Mode 2 protocol) to audit the change. If **Mode 2** classifies it as `PARTIAL` or `FAIL`, **Mode 2 will invoke Mode 3 back** passing the exact remaining items, maintaining this **closed loop (`Mode 3` $\leftrightarrow$ `Mode 2`)** until **Mode 2 guarantees `✅ PASS`**.
+3. **Exclusive Promotion to `PASS` by Mode 2:** Only after **Mode 2** validates and guarantees `✅ PASS` are the remediated IDs moved from `FAIL`/`PARTIAL` to `✅ PASS` in `owasp_iot_final_report.md`, marked as `[x] Re-tested and Approved (PASS)` in `owasp_iot_remediation_plan.md`, and updated in `owasp_iot_progress_checklist.md`.

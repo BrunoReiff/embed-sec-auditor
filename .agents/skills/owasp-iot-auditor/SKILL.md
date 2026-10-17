@@ -14,286 +14,283 @@ description: >-
 
 # OWASP IoT & Embedded Security Auditor Skill
 
-Esta Skill instrui o agente a atuar em **três modos de operação complementares** para auditoria, reteste e resolução de segurança em sistemas embarcados e ecossistemas IoT, baseando-se na metodologia OWASP unificada descrita nesta própria Skill (**Seção 6.1** = classificação de escopo da **Etapa 2**; **Seção 6.2** = os 6 módulos de teste da **Etapa 4**) e nos repositórios oficiais OWASP usados como fonte em `IOT_OWASP/` (`embeddedappsec`, `owasp-fstm` e `owasp-istg`, incluídos como *git submodules*):
+This Skill instructs the agent to operate in **three complementary operational modes** for security auditing, re-verification, and remediation across embedded systems and IoT ecosystems, based on the unified OWASP methodology described in this Skill (**Section 6.1** = scope classification in **Step 2**; **Section 6.2** = the 6 testing modules in **Step 4**) and the official OWASP repositories used as upstream sources in `IOT_OWASP/` (`embeddedappsec`, `owasp-fstm`, and `owasp-istg`, included as *git submodules*):
 
-| Modo de Chamada | Quando Usar | Como Funciona / Como o Usuário Chama |
+| Invocation Mode | When to Use | How It Works / How the User Invokes It |
 | :--- | :--- | :--- |
-| **Modo 1 — Auditoria Completa / Incremental** | Para mapear o projeto, rodar os 6 módulos da Seção 6.2 (registrando arquivo e linha exatos) e gerar o Relatório Final + Plano de Resolução. | *"Audite este projeto com a skill owasp-iot-auditor"* |
-| **Modo 2 — Verificação Pontual por ID OWASP (Juiz Estrito)** | Para retestar um `ID OWASP` específico. **Se o resultado for `PARTIAL` ou `FAIL`**, o Modo 2 registra exatamente o que faltou concluir e **chama o Modo 3 em loop** até garantir o `PASS`. | *"Verifique o ID `ISTG-FW-SCRT-003`"* ou *"Reteste `EMB-APPSEC-01`"* |
-| **Modo 3 — Resolução por ID OWASP (Loop com Modo 2)** | Para solucionar os IDs OWASP `X, Y, Z`. O Modo 3 **nunca** assume `PASS` sozinho: aplica a correção e chama o **Modo 2**; se ficar `PARTIAL`, recebe do Modo 2 o que faltou e repete o loop até o Modo 2 garantir `PASS`. | *"Solucione os IDs OWASP `ISTG-FW-SCRT-003`, `EMB-APPSEC-01` e `ISTG-DES-CRYPT-001`"* |
+| **Mode 1 — Full / Incremental Audit** | To map the project, run all 6 modules of Section 6.2 (recording exact file and line numbers), and generate the Final Report + Remediation Plan. | *"Audit this project with the owasp-iot-auditor skill"* |
+| **Mode 2 — Targeted ID Verification (Strict Judge)** | To re-test a specific `OWASP ID`. **If the result is `PARTIAL` or `FAIL`**, Mode 2 records the exact missing items and **invokes Mode 3 in a loop** until `PASS` is guaranteed. | *"Verify ID `ISTG-FW-SCRT-003`"* or *"Re-test `EMB-APPSEC-01`"* |
+| **Mode 3 — Targeted ID Remediation (Loop with Mode 2)** | To fix OWASP IDs `X, Y, Z`. Mode 3 **never** assumes `PASS` on its own: it applies the fix and invokes **Mode 2**; if `PARTIAL`, it receives the missing items from Mode 2 and repeats the loop until Mode 2 guarantees `PASS`. | *"Remediate OWASP IDs `ISTG-FW-SCRT-003`, `EMB-APPSEC-01`, and `ISTG-DES-CRYPT-001`"* |
 
-### Fluxograma Geral de Arquitetura e Casos de Uso do Agente
+### General Architecture & Agent Use-Case Flowchart
 
 ```mermaid
 flowchart TD
-    USER(["Chamada do Usuário"]) --> ROUTER{"Qual Caso de Uso / Modo?"}
+    USER(["User Request"]) --> ROUTER{"Which Use Case / Mode?"}
 
-    %% CASO DE USO 1: MODO 1
-    ROUTER -->|"Caso 1: Auditar Projeto (Modo 1)"| M1_E1["1. Sondagem Geral (Artefatos, RTOS, SDK, Rede, Hardware)"]
-    M1_E1 --> M1_E2["2. Classificação de Escopo (4 Categorias da Seção 6.1)"]
-    M1_E2 --> M1_E3["3. Checklist Guia de Estado (owasp_iot_checklist_progresso.md - Parte C FSTM Opcional)"]
-    M1_E3 --> M1_E4["4. Execução Sequencial Seção 6.2 (Módulos 1 a 6 registrando Arquivo e Linha Exatos)"]
-    M1_E4 --> M1_E5["5. Gera Relatório Zero-Scroll (FAIL 1º, PARTIAL 2º, PASS 3º) + Plano de Resolução"]
+    %% USE CASE 1: MODE 1
+    ROUTER -->|"Case 1: Audit Project (Mode 1)"| M1_E1["1. General Discovery (Artifacts, RTOS, SDK, Network, Hardware)"]
+    M1_E1 --> M1_E2["2. Scope Classification (4 Categories of Section 6.1)"]
+    M1_E2 --> M1_E3["3. State-Tracking Checklist (owasp_iot_progress_checklist.md - Part C FSTM Optional)"]
+    M1_E3 --> M1_E4["4. Sequential Execution Section 6.2 (Modules 1 to 6 recording Exact File & Line)"]
+    M1_E4 --> M1_E5["5. Generates Zero-Scroll Report (FAIL 1st, PARTIAL 2nd, PASS 3rd) + Remediation Plan"]
 
-    %% CASO DE USO 2: MODO 2 (DIRETO OU VIA AGENTE EXTERNO)
-    ROUTER -->|"Caso 2: Verificar ID OWASP Específico (Modo 2)"| M2_READ["Modo 2: Lê Arquivo(s), Linha(s) e Critérios do ID OWASP"]
-    M2_READ --> M2_INSP["Modo 2: Inspeção Cirúrgica no Código / Configuração"]
-    M2_INSP --> M2_JUDGE{"Qual o Veredito do Modo 2?"}
+    %% USE CASE 2: MODE 2 (DIRECT OR VIA EXTERNAL AGENT)
+    ROUTER -->|"Case 2: Verify Specific OWASP ID (Mode 2)"| M2_READ["Mode 2: Reads File(s), Line(s) & Criteria for the OWASP ID"]
+    M2_READ --> M2_INSP["Mode 2: Surgical Inspection of Code / Configuration"]
+    M2_INSP --> M2_JUDGE{"What is Mode 2's Verdict?"}
 
-    %% CASO DE USO 3: MODO 3 (RESOLUÇÃO + LOOP FECHADO)
-    ROUTER -->|"Caso 3: Solucionar IDs X, Y, Z (Modo 3)"| M3_LOC["Modo 3: Lê Localização Exata (Arquivo/Linha) ou Pendências do ID"]
-    M3_LOC --> M3_FIX["Modo 3: Implementa Correção Exclusiva nos Pontos Mapeados (Sem marcar PASS)"]
-    M3_FIX -->|"Aciona Verificador"| M2_INSP
+    %% USE CASE 3: MODE 3 (REMEDIATION + CLOSED LOOP)
+    ROUTER -->|"Case 3: Remediate IDs X, Y, Z (Mode 3)"| M3_LOC["Mode 3: Reads Exact Location (File/Line) or Remaining Gaps for ID"]
+    M3_LOC --> M3_FIX["Mode 3: Implements Fix Exclusively at Mapped Points (Without Marking PASS)"]
+    M3_FIX -->|"Triggers Verifier"| M2_INSP
 
-    %% LOOP FECHADO MODO 2 <-> MODO 3
-    M2_JUDGE -->|"PARTIAL ou FAIL (Faltou algo)"| M2_DELTA["Modo 2: Atualiza para PARTIAL/FAIL e Registra Exatamente O QUE FALTOU CONCLUIR (Arquivo/Linha)"]
-    M2_DELTA -->|"Chama Modo 3 passando o que faltou"| M3_LOC
+    %% CLOSED LOOP MODE 2 <-> MODE 3
+    M2_JUDGE -->|"PARTIAL or FAIL (Items still missing)"| M2_DELTA["Mode 2: Updates to PARTIAL/FAIL & Records EXACT MISSING ITEMS (File/Line)"]
+    M2_DELTA -->|"Invokes Mode 3 passing missing items"| M3_LOC
 
-    %% PROMOÇÃO EXCLUSIVA PELO MODO 2
-    M2_JUDGE -->|"PASS Garantido (100% Conforme)"| M2_PROMOTE["Modo 2: Promove para PASS no Relatório Final, Marca [x] no Plano e Atualiza Checklist"]
+    %% EXCLUSIVE PROMOTION BY MODE 2
+    M2_JUDGE -->|"PASS Guaranteed (100% Compliant)"| M2_PROMOTE["Mode 2: Promotes to PASS in Final Report, Marks [x] in Plan & Updates Checklist"]
 ```
 
 ---
 
-## Modo 1: Fluxo Operacional de Auditoria Completa (5 Etapas)
+## Mode 1: Full Audit Operational Workflow (5 Steps)
 
-Sempre que acionado para auditar um projeto embarcado/IoT por completo (ou retomar de onde parou), o agente **DEVE** seguir estritamente a ordem abaixo:
+Whenever invoked to audit an embedded/IoT project in full (or resume where it left off), the agent **MUST** strictly follow the sequence below:
 
 ```mermaid
 flowchart TD
-    A["Etapa 1: Sondagem Geral do Projeto (Artefatos e Tecnologias)"] --> B["Etapa 2: Classificação de Escopo (Seção 6.1 da Metodologia)"]
-    B --> C["Etapa 3: Inicialização ou Retomada do Checklist Guia (Onde parou / Para onde vai)"]
-    C --> D["Etapa 4: Execução Sequencial de Testes (Seção 6.2: Módulos 1 a 6 com Arquivo e Linha)"]
-    D --> E["Etapa 5: Relatório de Saída (Zero Scroll) + Plano de Resolução por ID OWASP"]
+    A["Step 1: General Project Discovery (Artifacts & Technologies)"] --> B["Step 2: Scope Classification (Section 6.1)"]
+    B --> C["Step 3: Initialize or Resume State-Tracking Checklist (Where it stopped / Where to go)"]
+    C --> D["Step 4: Sequential Test Execution (Section 6.2: Modules 1 to 6 with Exact File & Line)"]
+    D --> E["Step 5: Zero-Scroll Output Report + Remediation Plan by OWASP ID"]
 ```
 
 ---
 
-### Etapa 1: Sondagem Geral do Projeto (Discovery & Inventário Tecnológico)
+### Step 1: General Project Discovery (Artifact & Technology Inventory)
 
-Antes de executar qualquer teste de vulnerabilidade, faça uma varredura completa da estrutura de diretórios e arquivos do projeto-alvo para identificar todos os **artefatos** e **tecnologias** presentes:
+Before running any vulnerability test, perform a complete scan of the target project's directory and file structure to identify all present **artifacts** and **technologies**:
 
-1. **Execute o script auxiliar de sondagem** ou inspecione os diretórios:
-   - **Windows (PowerShell nativo):** [owasp_iot_scanner.ps1](./scripts/owasp_iot_scanner.ps1)
-     `powershell -ExecutionPolicy Bypass -File .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.ps1 -TargetDir <caminho_do_projeto> -InitChecklist`
+1. **Run the helper discovery script** or inspect the directories:
+   - **Windows (Native PowerShell):** [owasp_iot_scanner.ps1](./scripts/owasp_iot_scanner.ps1)
+     `powershell -ExecutionPolicy Bypass -File .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.ps1 -TargetDir <project_path> -InitChecklist`
    - **Linux/macOS (Python):** [owasp_iot_scanner.py](./scripts/owasp_iot_scanner.py)
-     `python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <caminho_do_projeto> --init-checklist`
-2. **Inventarie explicitamente:**
-   - **Linguagens e Código-Fonte:** C, C++, Assembly, Python, Lua, Shell scripts, JavaScript/TypeScript, HTML/CSS.
-   - **RTOS / Sistema Operacional / SDK:** ESP-IDF, FreeRTOS, Zephyr, Arduino, PlatformIO, Linux Embarcado (Yocto, Buildroot, BusyBox, OpenWrt, AGL), Bare-metal.
-   - **Arquitetura e Hardware Alvo:** ARM/Cortex-M/A, Xtensa (ESP32/ESP8266), RISC-V, MIPS, AVR, x86, barramentos (`UART`, `I2C`, `SPI`, `JTAG`, `SWD`), memórias (`Flash SPI`, `NVS`, `EEPROM`, `LittleFS`, `SquashFS`, `UBIFS`, `JFFS2`).
-   - **Artefatos de Build, Bootloader e Imagens:** `CMakeLists.txt`, `Makefile`, `platformio.ini`, `sdkconfig`, `Kconfig`, U-Boot configs, arquivos `.bin`, `.elf`, `.hex`, `.uf2`, `.img`, `Dockerfile`.
-   - **Bibliotecas Criptográficas e Protocolos de Rede/Rádio:** `mbedTLS`, `OpenSSL`, `wolfSSL`, `TinyCrypt`, `HTTP/REST`, `MQTT` (Mosquitto/Aedes/ESP-MQTT), `CoAP`, `WebSockets`, `Wi-Fi`, `BLE/Bluetooth`, `LoRaWAN`, `ZigBee`, `NFC/RFID`.
+     `python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <project_path> --init-checklist`
+2. **Explicitly inventory:**
+   - **Languages & Source Code:** C, C++, Assembly, Python, Lua, Shell scripts, JavaScript/TypeScript, HTML/CSS.
+   - **RTOS / Operating System / SDK:** ESP-IDF, FreeRTOS, Zephyr, Arduino, PlatformIO, Embedded Linux (Yocto, Buildroot, BusyBox, OpenWrt, AGL), Bare-metal.
+   - **Target Architecture & Hardware:** ARM/Cortex-M/A, Xtensa (ESP32/ESP8266), RISC-V, MIPS, AVR, x86, buses (`UART`, `I2C`, `SPI`, `JTAG`, `SWD`), storage/memory (`SPI Flash`, `NVS`, `EEPROM`, `LittleFS`, `SquashFS`, `UBIFS`, `JFFS2`).
+   - **Build Artifacts, Bootloader & Images:** `CMakeLists.txt`, `Makefile`, `platformio.ini`, `sdkconfig`, `Kconfig`, U-Boot configs, `.bin`, `.elf`, `.hex`, `.uf2`, `.img`, `Dockerfile`.
+   - **Cryptographic Libraries & Network/Wireless Protocols:** `mbedTLS`, `OpenSSL`, `wolfSSL`, `TinyCrypt`, `HTTP/REST`, `MQTT` (Mosquitto/Aedes/ESP-MQTT), `CoAP`, `WebSockets`, `Wi-Fi`, `BLE/Bluetooth`, `LoRaWAN`, `ZigBee`, `NFC/RFID`.
 
 ---
 
-### Etapa 2: Classificação das Funcionalidades conforme a Seção 6.1
+### Step 2: Functionality Classification per Section 6.1
 
-Com base nos artefatos encontrados na Etapa 1, classifique o projeto nas **4 categorias da Seção 6.1** (tabela abaixo) para ativar apenas os módulos e seções aplicáveis do checklist:
+Based on the artifacts discovered in Step 1, classify the project across the **4 categories of Section 6.1** (table below) to activate only the applicable checklist modules and sections:
 
-| Categoria (Seção 6.1) | Artefatos / Tecnologias Detectadas | Módulos e Componentes Ativados no Checklist |
+| Category (Section 6.1) | Detected Artifacts / Technologies | Activated Checklist Modules & Components |
 | :--- | :--- | :--- |
-| **1. Firmware / Código Embarcado** | Código C/C++, ESP-IDF, Arduino, PlatformIO, FreeRTOS, Zephyr, Linux embarcado | `ISTG-FW`, `ISTG-FW[INST]`, `ISTG-FW[UPDT]`, `ISTG-MEM`, `ISTG-PROC`, `ISTG-INT` (`UART`/`I2C`) e os 10 domínios do `Embedded AppSec` |
-| **2. Sistema de Build / Imagem de Firmware** | `sdkconfig`, `platformio.ini`, `CMakeLists.txt`, `Makefile`, Yocto, Buildroot, `Dockerfile`, `.bin`/`.elf` | Hardening de Compilação (`ISTG-FW-INFO-004`), Superfície Mínima (`ISTG-FW-CONF-002`), Bootloader (`ISTG-FW[INST]-CRYPT-001`) e SBOM (`ISTG-FW-CONF-001`) |
-| **3. Backend / Broker / Serviços de Dados** | Node.js/Express, Python/Flask/FastAPI, Brokers MQTT (Aedes/Mosquitto), APIs REST, CoAP, Bancos de Dados | `ISTG-DES` (Serviços de Troca de Dados) |
-| **4. Aplicação Web / Painel / Mobile / Interfaces** | Frontend Web, Web UI embarcada (`/www`, `/htdocs`), App Mobile, Display/Botões, Interfaces Físicas/Wireless | `ISTG-UI` (Interfaces de Usuário), além de `ISTG-WRLS` (se houver rádio/Wi-Fi/BLE/RFID) e `ISTG-PHY` (se houver portas externas USB/Ethernet/SD) |
+| **1. Firmware / Embedded Code** | C/C++ code, ESP-IDF, Arduino, PlatformIO, FreeRTOS, Zephyr, Embedded Linux | `ISTG-FW`, `ISTG-FW[INST]`, `ISTG-FW[UPDT]`, `ISTG-MEM`, `ISTG-PROC`, `ISTG-INT` (`UART`/`I2C`), and the 10 `Embedded AppSec` domains |
+| **2. Build System / Firmware Image** | `sdkconfig`, `platformio.ini`, `CMakeLists.txt`, `Makefile`, Yocto, Buildroot, `Dockerfile`, `.bin`/`.elf` | Compiler Hardening (`ISTG-FW-INFO-004`), Minimal Attack Surface (`ISTG-FW-CONF-002`), Bootloader (`ISTG-FW[INST]-CRYPT-001`), and SBOM (`ISTG-FW-CONF-001`) |
+| **3. Backend / Broker / Data Services** | Node.js/Express, Python/Flask/FastAPI, MQTT Brokers (Aedes/Mosquitto), REST APIs, CoAP, Databases | `ISTG-DES` (Data Exchange Services) |
+| **4. Web App / Dashboard / Mobile / Interfaces** | Web Frontend, Embedded Web UI (`/www`, `/htdocs`), Mobile App, Display/Buttons, Physical/Wireless Interfaces | `ISTG-UI` (User Interfaces), plus `ISTG-WRLS` (if Wi-Fi/BLE/RFID/radio is present) and `ISTG-PHY` (if external USB/Ethernet/SD ports exist) |
 
 > [!IMPORTANT]
-> Componentes que **não** existirem no projeto (por exemplo, `ISTG-UI` em um sensor headless sem interface de usuário, ou `ISTG-INT[I2C]` quando não há barramento I2C) devem ser marcados no checklist como `N/A` com a justificativa técnica correspondente.
+> Components that do **not** exist in the project (for example, `ISTG-UI` on a headless sensor with no user interface, or `ISTG-INT[I2C]` when no I2C bus is used) must be marked in the checklist as `N/A` with the corresponding technical justification.
 
 ---
 
-### Etapa 3: Uso dos Checklists como Guia de Estado (Onde Parou e Para Onde Deve Ir)
+### Step 3: Using Checklists as a State Guide (Where the Agent Stopped & Where to Go Next)
 
-O agente **DEVE** manter um arquivo de checklist de estado no projeto auditado (por padrão `owasp_iot_checklist_progresso.md`) baseado em:
-- **Parte A (Obrigatória):** [checklists/checklist.md](../../../IOT_OWASP/owasp-istg/checklists/checklist.md) (casos de teste do OWASP ISTG);
-- **Parte B (Obrigatória):** Os domínios do [OWASP Embedded Application Security](../../../IOT_OWASP/embeddedappsec/SUMMARY.md);
-- **Parte C (OPCIONAL — Somente se o usuário pedir):** Os 9 estágios do [OWASP FSTM](../../../IOT_OWASP/owasp-fstm/README.md). Como o processo completo do FSTM (extração de binários, emulação e exploração em runtime) é longo e complexo, **NÃO deve ser executado por padrão**, permanecendo com status `OPCIONAL` a menos que o usuário solicite explicitamente.
+The agent **MUST** maintain a state-tracking checklist file in the audited project (by default `owasp_iot_progress_checklist.md`) based on:
+- **Part A (Mandatory):** [checklists/checklist.md](../../../IOT_OWASP/owasp-istg/checklists/checklist.md) (OWASP ISTG test cases);
+- **Part B (Mandatory):** The domains of [OWASP Embedded Application Security](../../../IOT_OWASP/embeddedappsec/SUMMARY.md);
+- **Part C (OPTIONAL — Only if requested by the user):** The 9 stages of [OWASP FSTM](../../../IOT_OWASP/owasp-fstm/README.md). Because the full FSTM process (binary extraction, emulation, and runtime exploitation) is lengthy and complex, it **MUST NOT be executed by default**, remaining with status `OPTIONAL` unless explicitly requested by the user.
 
-#### Como operar o Checklist de Estado:
-1. **Verifique se já existe um checklist em andamento** no projeto (`owasp_iot_checklist_progresso.md`).
-   - **Se NÃO existir:** Copie a estrutura a partir do template consolidado [checklist_template.md](./resources/checklist_template.md), preenchendo o cabeçalho **"Estado Atual da Auditoria"** com a classificação da Seção 6.1, marcando os componentes fora de escopo como `N/A` e os aplicáveis (Partes A e B) como `PENDENTE` (mantendo a Parte C como `OPCIONAL`).
-   - **Se JÁ existir:** Leia o bloco **"Estado Atual da Auditoria (Guia de Navegação do Agente)"** no topo do arquivo para identificar imediatamente:
-     - **Onde o agente parou:** Último módulo da Seção 6.2 e último `Test ID` verificado;
-     - **Para onde o agente deve ir:** Próximo módulo da Seção 6.2 e próximos `Test IDs` com status `PENDENTE` ou `EM_ANDAMENTO`.
-2. **Atualização contínua:** Ao concluir cada módulo da Seção 6.2, atualize o status de cada item no checklist usando a nomenclatura padronizada:
-   - `DE ACORDO (PASS)` — Controle implementado corretamente segundo a norma OWASP;
-   - `PARCIALMENTE DE ACORDO (PARTIAL)` — Controle existe, mas é incompleto ou possui falhas parciais de implementação;
-   - `EM DESACORDO (FAIL)` — Controle ausente ou vulnerabilidade confirmada;
-   - `N/A` — Não aplicável à arquitetura/escopo do projeto;
-   - `PENDENTE` — Ainda não verificado (indica para onde o agente deve ir a seguir);
-   - `OPCIONAL` — Exclusivo para a Parte C (FSTM), executado somente sob pedido explícito do usuário.
+#### How to Operate the State-Tracking Checklist:
+1. **Check whether an active checklist already exists** in the project (`owasp_iot_progress_checklist.md`).
+   - **If it DOES NOT exist:** Copy the structure from the consolidated template [checklist_template.md](./resources/checklist_template.md), populating the **"Current Audit State"** header with the Section 6.1 classification, marking out-of-scope components as `N/A`, and applicable items (Parts A and B) as `PENDING` (keeping Part C as `OPTIONAL`).
+   - **If it ALREADY exists:** Read the **"Current Audit State (Agent Navigation Guide)"** block at the top of the file to immediately identify:
+     - **Where the agent stopped:** Last completed Section 6.2 module and last verified `Test ID`;
+     - **Where the agent must go next:** Next Section 6.2 module and next `Test IDs` with status `PENDING` or `IN_PROGRESS`.
+2. **Continuous updating:** Upon completing each module of Section 6.2, update the status of every item in the checklist using the standardized nomenclature:
+   - `PASS` — Control properly implemented according to the OWASP standard;
+   - `PARTIAL` — Control exists but is incomplete or has partial implementation flaws;
+   - `FAIL` — Control missing or vulnerability confirmed;
+   - `N/A` — Not applicable to the project's architecture/scope;
+   - `PENDING` — Not yet verified (indicates where the agent must go next);
+   - `OPTIONAL` — Exclusive to Part C (FSTM), executed only upon explicit user request.
 
 ---
 
-### Etapa 4: Execução dos Testes e Verificações na Ordem da Seção 6.2
+### Step 4: Executing Tests & Verifications in Section 6.2 Order
 
-Execute as verificações técnicas **estritamente na sequência dos 6 Módulos da Seção 6.2** (definidos abaixo). Consulte as regras detalhadas e expressões regulares em [verification_rules.md](./references/verification_rules.md).
+Execute the technical verifications **strictly in the sequence of the 6 Modules of Section 6.2** (defined below). Consult the detailed criteria and regular expressions in [verification_rules.md](./references/verification_rules.md).
 
 > [!IMPORTANT]
-> **OBRIGATÓRIO (Rastreabilidade de Arquivo(s) e Linha(s) para o Agente Solucionador):**
-> Durante a execução do **Modo 1** (e especialmente no **Módulo 1 — SAST Embarcado & Qualidade de Memória** e nos módulos subsequentes), sempre que uma vulnerabilidade ou não-conformidade (`FAIL` ou `PARTIAL`) for detectada, o agente **DEVE obrigatoriamente anotar TODAS as ocorrências exatas**, especificando **em qual(is) arquivo(s) e em qual(is) linha(s)** o problema se encontra (ex.: `[src/main.c:L42-L48](file:///caminho/absoluto/src/main.c#L42-L48)`, `[src/net.c:L115](file:///caminho/absoluto/src/net.c#L115)` + nome da função/chamada afetada).
-> **Objetivo:** Minimizar ao máximo o esforço do agente que irá solucionar o problema (seja no Modo 3 ou um agente externo), permitindo que ele abra diretamente o arquivo e a linha exata sem precisar reescanear o código.
+> **MANDATORY (Exact File(s) and Line(s) Traceability for the Remediator Agent):**
+> During **Mode 1** execution (especially in **Module 1 — Embedded SAST & Memory Quality** and all subsequent modules), whenever a vulnerability or non-compliance (`FAIL` or `PARTIAL`) is detected, the agent **MUST mandatorily record ALL exact occurrences**, specifying **which file(s) and exact line number(s)** contain the issue (e.g., `[src/main.c:L42-L48](file:///abs/path/src/main.c#L42-L48)`, `[src/net.c:L115](file:///abs/path/src/net.c#L115)` + affected function/call name).
+> **Objective:** Minimize the effort required by the remediating agent (whether in Mode 3 or an external agent), enabling it to open the exact file and line directly without rescanning the codebase.
 
-#### Ordem de Execução Obrigatória:
+#### Mandatory Execution Order:
 
-1. **Módulo 1 — SAST Embarcado & Qualidade de Memória**
-   - **O que verificar (registrando sempre o(s) arquivo(s) e linha(s) exata(s) de cada ocorrência):**
-     - Funções C/C++ banidas/inseguras (`gets`, `strcpy`, `strcat`, `sprintf`, `vsprintf`, `scanf("%s")` sem limite) e mau uso de `strncpy`/`strncat` com `strlen(src)`;
-     - Vetores de *OS Command Injection* e *Code Injection* (`system`, `popen`, `exec*`, `os.execute`, `eval`, SQL sem *prepared statements*);
-     - Limpeza segura de buffers sensíveis na RAM (`memset_s` / `mbedtls_platform_zeroize`, `mlock`, desativação de *core dumps*), controle de *Stack Overflow* (`configCHECK_FOR_STACK_OVERFLOW` no FreeRTOS) e *watchdog*.
-   - **Registro Obrigatório para o Solucionador:** Liste cada chamada insegura encontrada com `[arquivo:L<inicio>-L<fim>](file:///caminho#L<inicio>-L<fim>)`, a função onde ocorre e o buffer/variável afetada.
-   - **Itens do Checklist atualizados neste módulo:**
+1. **Module 1 — Embedded SAST & Memory Quality**
+   - **What to verify (always recording the exact file(s) and line(s) of every occurrence):**
+     - Banned/unsafe C/C++ functions (`gets`, `strcpy`, `strcat`, `sprintf`, `vsprintf`, unbounded `scanf("%s")`) and misuse of `strncpy`/`strncat` bounded by `strlen(src)`;
+     - *OS Command Injection* and *Code Injection* vectors (`system`, `popen`, `exec*`, `os.execute`, `eval`, SQL queries without *prepared statements*);
+     - Secure zeroization of sensitive buffers in RAM (`memset_s` / `mbedtls_platform_zeroize`, `mlock`, disabling *core dumps*), *Stack Overflow* protection (`configCHECK_FOR_STACK_OVERFLOW` in FreeRTOS), and hardware *watchdog*.
+   - **Mandatory Record for the Remediator:** List every unsafe call found with `[file:L<start>-L<end>](file:///path#L<start>-L<end>)`, the enclosing function, and the affected buffer/variable.
+   - **Checklist items updated in this module:**
      - `EMB-APPSEC-01` (Buffer/Stack Overflow), `EMB-APPSEC-02` (Injection Prevention), `ISTG-PROC-LOGIC-001`, `ISTG-DES-INPV-001`, `ISTG-DES-INPV-002`, `ISTG-INT-INPV-001/002`, `ISTG-INT[I2C]-INPV-001`, `ISTG-INT[UART]-INPV-001`, `ISTG-PHY-INPV-001/002`, `ISTG-WRLS-INPV-001/002`, `ISTG-UI-INPV-001/002`.
 
-2. **Módulo 2 — Segredos, Identidade e Criptografia (`SCRT`, `CRYPT`, `AUTHZ`)**
-   - **O que verificar:**
-     - Segredos *hardcoded* em código, headers `.h`, scripts ou binários (senhas Wi-Fi/MQTT, chaves privadas `.key`/`.pem`, tokens de API, credenciais padrão estáticas);
-     - Proteção do `.gitignore` bloqueando `*.key`, `*.pem`, `*.csr`, `*.p12`, `.env`;
-     - Configurações TLS/mTLS (TLS 1.2/1.3 obrigatório, `MBEDTLS_SSL_VERIFY_REQUIRED` / `rejectUnauthorized: true`, validação de CN/SAN, suítes AEAD AES-GCM/ChaCha20, sincronização NTP/RTC);
-     - Armazenamento seguro de segredos e dados sensíveis (Flash Encryption, NVS Encryption, Secure Element/TPM, hashing forte com salt/bcrypt para senhas e UIDs RFID, política de complexidade de senha, lockout contra força bruta, gestão segura de sessão Web com `HttpOnly`/`Secure` e Privacy-by-Design / Factory Reset).
-   - **Itens do Checklist atualizados neste módulo:**
+2. **Module 2 — Secrets, Identity & Cryptography (`SCRT`, `CRYPT`, `AUTHZ`)**
+   - **What to verify:**
+     - *Hardcoded* secrets in source code, `.h` headers, scripts, or binaries (Wi-Fi/MQTT passwords, `.key`/`.pem` private keys, API tokens, static default credentials);
+     - `.gitignore` protection blocking `*.key`, `*.pem`, `*.csr`, `*.p12`, `.env`;
+     - TLS/mTLS configurations (mandatory TLS 1.2/1.3, `MBEDTLS_SSL_VERIFY_REQUIRED` / `rejectUnauthorized: true`, CN/SAN validation, AEAD cipher suites AES-GCM/ChaCha20, NTP/RTC time synchronization);
+     - Secure storage of secrets and sensitive data (Flash Encryption, NVS Encryption, Secure Element/TPM, strong salted/bcrypt hashing for passwords and RFID UIDs, password complexity policy, brute-force lockout, secure web session management with `HttpOnly`/`Secure`, and Privacy-by-Design / Factory Reset).
+   - **Checklist items updated in this module:**
      - `EMB-APPSEC-04`, `EMB-APPSEC-05`, `EMB-APPSEC-08`, `EMB-APPSEC-09`, `ISTG-MEM-SCRT-001`, `ISTG-MEM-CRYPT-001`, `ISTG-MEM-INFO-004`, `ISTG-FW-SCRT-001/002/003`, `ISTG-FW-CRYPT-001`, `ISTG-FW[INST]-AUTHZ-001/002`, `ISTG-FW[INST]-INFO-001`, `ISTG-DES-SCRT-001`, `ISTG-DES-CRYPT-001`, `ISTG-INT/PHY/WRLS/UI-AUTHZ-001/002`, `ISTG-INT/PHY/WRLS/UI-SCRT-001`, `ISTG-INT/PHY/WRLS/UI-CRYPT-001`, `ISTG-PROC-SIDEC-001`.
 
-3. **Módulo 3 — Hardening de Build, Bootloader e Binários (`INFO-004`, `CONF-002`)**
-   - **O que verificar:**
-     - Flags de mitigação no compilador/toolchain (`-fPIE -pie`, `-fstack-protector-strong`/`all`, `-Wl,-z,noexecstack`, `-Wl,-z,relro,-z,now`, `-D_FORTIFY_SOURCE=2`) e verificação de binários ELF/PE (`checksec`/`readelf`);
-     - Hardening de bootloader e SoC (U-Boot `CONFIG_ENABLE_VBOOT=y`, `CONFIG_FIT_SIGNATURE=y`, `CONFIG_BOOTDELAY=-2`, console silencioso; ESP-IDF `CONFIG_SECURE_BOOT_V2_ENABLED`, `CONFIG_SECURE_FLASH_ENC_ENABLED`, desativação de JTAG/ROM DL mode);
-     - Redução de superfície (remoção de `telnetd`, `ftpd`, `gdbserver`, `strace`, múltiplos shells, código de debug/backdoors de fábrica CWE-489);
-     - Auditoria de logs seriais (`Serial.print*`, `printf`, `ESP_LOG*`) para impedir vazamento de segredos, chaves, endereços de memória ou PII na `UART` (`ISTG-INT[UART]-INFO-002`) e bloqueio de console serial não autenticado (`ISTG-INT[UART]-AUTHZ-001/002`).
-   - **Itens do Checklist atualizados neste módulo:**
+3. **Module 3 — Build, Bootloader & Binary Hardening (`INFO-004`, `CONF-002`)**
+   - **What to verify:**
+     - Compiler/toolchain mitigation flags (`-fPIE -pie`, `-fstack-protector-strong`/`all`, `-Wl,-z,noexecstack`, `-Wl,-z,relro,-z,now`, `-D_FORTIFY_SOURCE=2`) and ELF/PE binary verification (`checksec`/`readelf`);
+     - Bootloader and SoC hardening (U-Boot `CONFIG_ENABLE_VBOOT=y`, `CONFIG_FIT_SIGNATURE=y`, `CONFIG_BOOTDELAY=-2`, silent console; ESP-IDF `CONFIG_SECURE_BOOT_V2_ENABLED`, `CONFIG_SECURE_FLASH_ENC_ENABLED`, disabling JTAG/ROM DL mode);
+     - Attack surface reduction (removal of `telnetd`, `ftpd`, `gdbserver`, `strace`, extra shells, debug code/factory backdoors CWE-489);
+     - Serial log audit (`Serial.print*`, `printf`, `ESP_LOG*`) to prevent leaking secrets, keys, memory addresses, or PII over `UART` (`ISTG-INT[UART]-INFO-002`) and blocking unauthenticated serial consoles (`ISTG-INT[UART]-AUTHZ-001/002`).
+   - **Checklist items updated in this module:**
      - `EMB-APPSEC-06`, `EMB-APPSEC-07`, `ISTG-PROC-AUTHZ-001/002`, `ISTG-MEM-INFO-001/002/003/005`, `ISTG-FW-INFO-001/002/003/004`, `ISTG-FW-CONF-002`, `ISTG-FW[INST]-CRYPT-001`, `ISTG-INT[UART]-AUTHZ-001/002`, `ISTG-INT[UART]-INFO-001/002`, `ISTG-INT[I2C]-AUTHZ-001`, `ISTG-INT[I2C]-INFO-001/002/003`, `ISTG-INT/PHY/WRLS/UI-INFO-001/002/003`, `ISTG-INT/PHY/WRLS/UI-CONF-002`.
 
-4. **Módulo 4 — Ciclo de Vida de Atualização de Firmware (`ISTG-FW[UPDT]`)**
-   - **O que verificar:**
-     - Autenticação e autorização obrigatórias para acionar ou enviar atualização de firmware (`ISTG-FW[UPDT]-AUTHZ-001`);
-     - Assinatura criptográfica assimétrica forte da imagem (RSA-2048/3072, ECDSA) e validação estrita no dispositivo **antes** da gravação/execução (`ISTG-FW[UPDT]-CRYPT-001`, `ISTG-FW[UPDT]-CRYPT-004`);
-     - Criptografia da imagem de atualização em repouso/distribuição (`ISTG-FW[UPDT]-CRYPT-002`);
-     - Transporte seguro do pacote OTA sobre HTTPS/MQTTS com validação de certificado X.509 (`ISTG-FW[UPDT]-CRYPT-003`);
-     - Proteção *Anti-Rollback* (validação de versão semântica / contador monotônico em eFuse/hardware) e confirmação de partição A/B (`ISTG-FW[UPDT]-LOGIC-001`).
-   - **Itens do Checklist atualizados neste módulo:**
+4. **Module 4 — Firmware Update Lifecycle (`ISTG-FW[UPDT]`)**
+   - **What to verify:**
+     - Mandatory authentication and authorization to trigger or upload a firmware update (`ISTG-FW[UPDT]-AUTHZ-001`);
+     - Strong asymmetric cryptographic signature of the image (RSA-2048/3072, ECDSA) and strict on-device verification **before** flashing/execution (`ISTG-FW[UPDT]-CRYPT-001`, `ISTG-FW[UPDT]-CRYPT-004`);
+     - Encryption of the firmware update image at rest/distribution (`ISTG-FW[UPDT]-CRYPT-002`);
+     - Secure transport of the OTA package over HTTPS/MQTTS with X.509 certificate validation (`ISTG-FW[UPDT]-CRYPT-003`);
+     - *Anti-Rollback* protection (semantic version check / monotonic counter in eFuse/hardware) and A/B partition boot confirmation (`ISTG-FW[UPDT]-LOGIC-001`).
+   - **Checklist items updated in this module:**
      - `EMB-APPSEC-03`, `ISTG-FW[UPDT]-AUTHZ-001`, `ISTG-FW[UPDT]-CRYPT-001`, `ISTG-FW[UPDT]-CRYPT-002`, `ISTG-FW[UPDT]-CRYPT-003`, `ISTG-FW[UPDT]-CRYPT-004`, `ISTG-FW[UPDT]-LOGIC-001`.
 
-5. **Módulo 5 — Serviços de Troca de Dados e Lógica de Negócio (`ISTG-DES`)**
-   - **O que verificar:**
-     - Autenticação e segregação de portas/protocolos entre interfaces administrativas Web e canais M2M/IoT (`ISTG-DES-AUTHZ-001`);
-     - Controle de acesso horizontal e vertical (ACL de tópicos MQTT por dispositivo/sala amarrado ao CN/identidade do certificado X.509 — `ISTG-DES-AUTHZ-002`);
-     - Ocultação de banners, versões e detalhes internos de ecossistema/rotas (`ISTG-DES-INFO-001/002/003`, `ISTG-DES-CONF-002`);
-     - Proteções de lógica de negócio: anti-replay (timestamps/nonces), rate-limiting/cooldown no edge e no broker contra *flooding*, configuração de *Last Will and Testament (LWT)*, reconciliação de estado e logs de eventos críticos (`ISTG-DES-LOGIC-001`, `ISTG-INT/PHY/WRLS/UI-LOGIC-001`).
-   - **Itens do Checklist atualizados neste módulo:**
+5. **Module 5 — Data Exchange Services & Business Logic (`ISTG-DES`)**
+   - **What to verify:**
+     - Authentication and port/protocol segregation between administrative Web interfaces and M2M/IoT channels (`ISTG-DES-AUTHZ-001`);
+     - Horizontal and vertical access control (per-device/per-room MQTT topic ACLs bound to the X.509 certificate CN/identity — `ISTG-DES-AUTHZ-002`);
+     - Suppression of verbose banners, versions, and internal ecosystem/route details (`ISTG-DES-INFO-001/002/003`, `ISTG-DES-CONF-002`);
+     - Business logic protections: anti-replay (timestamps/nonces), edge and broker rate-limiting/cooldown against *flooding*, *Last Will and Testament (LWT)* configuration, state reconciliation, and critical security event logging (`ISTG-DES-LOGIC-001`, `ISTG-INT/PHY/WRLS/UI-LOGIC-001`).
+   - **Checklist items updated in this module:**
      - `EMB-APPSEC-11` (Threat Modeling), `ISTG-DES-AUTHZ-001/002`, `ISTG-DES-INFO-001/002/003`, `ISTG-DES-CONF-002`, `ISTG-DES-LOGIC-001`, `ISTG-INT/PHY/WRLS/UI-LOGIC-001`.
 
-6. **Módulo 6 — SBOM e Dependências de Terceiros (`CONF-001`)**
-   - **O que verificar:**
-     - Inventário completo (SBOM) de bibliotecas embarcadas (`platformio.ini`, `idf_component.yml`, submódulos C/C++, pacotes Linux) e dependências de backend/frontend (`package.json`, `requirements.txt`, etc.);
-     - Verificação de versões fixadas (*pinned versions*), presença dos 7 elementos mínimos da CISA / ISVS V1.1.1 e correlação com CVEs conhecidas.
-   - **Itens do Checklist atualizados neste módulo:**
+6. **Module 6 — SBOM & Third-Party Dependencies (`CONF-001`)**
+   - **What to verify:**
+     - Complete inventory (SBOM) of embedded libraries (`platformio.ini`, `idf_component.yml`, C/C++ submodules, Linux packages) and backend/frontend dependencies (`package.json`, `requirements.txt`, etc.);
+     - Verification of *pinned versions*, presence of the 7 CISA / ISVS V1.1.1 minimum elements, and correlation against known CVEs.
+   - **Checklist items updated in this module:**
      - `EMB-APPSEC-10`, `ISTG-FW-CONF-001`, `ISTG-DES-CONF-001`, `ISTG-INT-CONF-001`, `ISTG-PHY-CONF-001`, `ISTG-WRLS-CONF-001`, `ISTG-UI-CONF-001`.
 
 ---
 
-### Etapa 5: Geração do Relatório de Saída (Sem Scroll) + Plano de Resolução (`owasp_iot_plano_resolucao.md`)
+### Step 5: Generating the Zero-Scroll Output Report + Remediation Plan (`owasp_iot_remediation_plan.md`)
 
-Após concluir a execução dos módulos (Módulos 1 a 6 da Seção 6.2) e atualizar o arquivo de checklist de estado (`owasp_iot_checklist_progresso.md`), o agente **DEVE** gerar **dois arquivos complementares** no projeto:
+After completing the execution of Modules 1 to 6 of Section 6.2 and updating the state-tracking checklist (`owasp_iot_progress_checklist.md`), the agent **MUST** generate **two complementary files** in the project:
 
-#### 5.1. Relatório Final de Saída (`owasp_iot_relatorio_final.md` — baseado em [report_template.md](./resources/report_template.md))
+#### 5.1. Final Output Report (`owasp_iot_final_report.md` — based on [report_template.md](./resources/report_template.md))
 
 > [!CAUTION]
-> **PROIBIDO MISTURAR STATUS NA MESMA TABELA NO RELATÓRIO DE SAÍDA:** O usuário **não** deve precisar fazer *scroll* por tabelas de componentes (`PROC`, `MEM`, `FW`, `DES`...) procurando quais itens falharam. O relatório de saída **DEVE** ser estruturado em seções exclusivas para cada categoria de conformidade, com um **Menu de Navegação Rápida (links âncora clicáveis)** no topo e colocando os itens reprovados primeiro:
+> **NEVER MIX STATUSES IN THE SAME TABLE IN THE OUTPUT REPORT:** The user must **not** have to scroll through component tables (`PROC`, `MEM`, `FW`, `DES`...) hunting for failed items. The output report **MUST** be structured into dedicated sections for each compliance status, with a **Quick Navigation Menu (clickable anchor links)** at the top and failed items placed first:
 
-1. **⚡ Menu de Navegação Rápida no Topo (Tabela com Quantidades + Links Diretos Clicáveis):**
-   - Permite pular com 1 clique diretamente para a seção desejada (`FAIL`, `PARTIAL`, `PASS`, `N/A`, `Plano de Resolução`, `Sondagem`).
-2. **❌ Seção 1 — Tópicos TOTALMENTE EM DESACORDO com as Normas (`FAIL` — Não Passaram no Teste):**
-   - Posicionada **no topo do relatório** (logo abaixo do índice) para visualização imediata sem necessidade de *scroll*.
-   - Reúne em uma única tabela todos os itens `FAIL` do checklist, com `ID OWASP`, `Módulo (6.2)`, `Componente`, `Tópico`, `Evidência Verificável (Arquivo/Linha)`, `Risco (STRIDE/CWE)` e `Recomendação de Correção`.
-3. **⚠️ Seção 2 — Tópicos PARCIALMENTE DE ACORDO com as Normas (`PARTIAL`):**
-   - Reúne em uma única seção dedicada todos os itens com mitigação parcial/incompleta, indicando claramente *o que já atende vs. o que falta* e a recomendação direta de ajuste.
-4. **✅ Seção 3 — Tópicos DE ACORDO com as Normas (`PASS`):**
-   - Reúne em sua própria seção dedicada todos os itens aprovados integralmente nos testes e suas respectivas evidências.
-5. **⚪ Seção 4 — Tópicos Não Aplicáveis (`N/A`):**
-   - Resumo compacto dos componentes/testes fora do escopo arquitetural do projeto.
-6. **🔍 Seção 5 — Resumo da Sondagem Geral e Classificação (Seção 6.1):**
-   - Artefatos/tecnologias detectadas e quais das 4 categorias da Seção 6.1 foram ativadas.
+1. **⚡ Quick Navigation Menu at the Top (Table with Counts + Direct Clickable Links):**
+   - Allows jumping with 1 click directly to the desired section (`FAIL`, `PARTIAL`, `PASS`, `N/A`, `Remediation Plan`, `Discovery`).
+2. **❌ Section 1 — Topics FULLY NON-COMPLIANT with Standards (`FAIL` — Failed the Test):**
+   - Positioned **at the very top of the report** (right below the index) for immediate visibility without scrolling.
+   - Consolidates all `FAIL` items from the checklist into a single table with `OWASP ID`, `Module (6.2)`, `Component`, `Topic`, `Verifiable Evidence (File/Line)`, `Risk (STRIDE/CWE)`, and `Remediation Recommendation`.
+3. **⚠️ Section 2 — Topics PARTIALLY COMPLIANT with Standards (`PARTIAL`):**
+   - Consolidates all items with partial/incomplete mitigation into a dedicated section, clearly stating *what is already in place vs. what is missing* and the direct adjustment recommendation.
+4. **✅ Section 3 — Topics FULLY COMPLIANT with Standards (`PASS`):**
+   - Consolidates all items that passed testing in full along with their verified evidence.
+5. **⚪ Section 4 — Not Applicable Topics (`N/A`):**
+   - Compact summary of components/tests outside the architectural scope of the project.
+6. **🔍 Section 5 — General Discovery & Scope Classification Summary (Section 6.1):**
+   - Detected artifacts/technologies and which of the 4 categories of Section 6.1 were activated.
 
-#### 5.2. Arquivo de Organização de Resoluções do Usuário (`owasp_iot_plano_resolucao.md` — baseado em [remediation_tracker_template.md](./resources/remediation_tracker_template.md))
-- Crie o arquivo `owasp_iot_plano_resolucao.md` listando todos os itens `FAIL` (Prioridade Alta) e `PARTIAL` (Prioridade Média) como cards de tarefas (`[ ] <ID_OWASP> — <Nome>`) contendo:
-  - O arquivo e linhas exatas onde o problema ocorre;
-  - Um **Prompt pronto para copiar e colar** caso o usuário queira pedir para outro Agente Desenvolvedor corrigir aquela falha;
-  - O **Comando pronto de Reteste Pontual por ID OWASP** (ex.: `"Verifique o ID ISTG-FW-SCRT-003"`) para o usuário chamar este Agente Verificador assim que a correção for concluída.
+#### 5.2. User Remediation & Tracking File (`owasp_iot_remediation_plan.md` — based on [remediation_tracker_template.md](./resources/remediation_tracker_template.md))
+- Create `owasp_iot_remediation_plan.md` listing all `FAIL` (High Priority) and `PARTIAL` (Medium Priority) items as actionable task cards (`[ ] <OWASP_ID> — <Name>`) containing:
+  - The exact file(s) and line(s) where the issue occurs;
+  - A **Ready-to-Copy Prompt** in case the user wants to ask another Developer Agent to fix that flaw;
+  - The **Ready-to-Use Targeted Re-verification Command by OWASP ID** (e.g., `"Verify ID ISTG-FW-SCRT-003"`) for the user to invoke this Verifier Agent once the fix is complete.
 
 ---
 
-## Modo 2: Verificação Pontual / Reteste por ID OWASP (`Targeted ID Verification Mode`)
+## Mode 2: Targeted Single-ID Verification / Re-test (`Targeted ID Verification Mode`)
 
-Quando o usuário (ou o próprio Modo 3) acionar o agente no **Modo 2** passando **um ou mais IDs OWASP específicos** (ex.: *"Verifique o ID `ISTG-FW-SCRT-003`"*, *"Reteste o `EMB-APPSEC-01` que acabei de corrigir"*), o agente **NÃO DEVE** reexecutar a auditoria completa (Etapas 1 a 5) e **JAMAIS deve assumir que uma tentativa de correção virou `PASS` automaticamente**.
+When the user (or Mode 3 itself) invokes the agent in **Mode 2** passing **one or more specific OWASP IDs** (e.g., *"Verify ID `ISTG-FW-SCRT-003`"*, *"Re-test `EMB-APPSEC-01` that I just fixed"*), the agent **MUST NOT** re-run the full audit (Steps 1 to 5) and **MUST NEVER assume that an attempted fix automatically became `PASS`**.
 
-Em vez disso, o **Modo 2** atua como **juiz estrito de conformidade** e, caso identifique que a correção ficou `PARTIAL` (ou permaneceu `FAIL`), **deve acionar o Modo 3 passando exatamente o que faltou concluir, mantendo esse loop até garantir o `PASS`**:
+Instead, **Mode 2** acts as a **strict compliance judge** and, if it identifies that the fix is `PARTIAL` (or remains `FAIL`), **must invoke Mode 3 passing the exact missing items, maintaining this loop until `PASS` is guaranteed**:
 
 ```mermaid
 flowchart TD
-    R1["Passo 1: Localizar o ID OWASP no Plano/Relatório e Regras Técnicas"] --> R2["Passo 2: Inspeção Cirúrgica nos Arquivos e Linhas da Vulnerabilidade"]
-    R2 --> R3{"Passo 3: Qual o Veredito Real da Verificação (Modo 2)?"}
-    R3 -->|"PARTIAL ou FAIL (Ainda faltam itens)"| R_LOOP["Atualizar status para PARTIAL/FAIL, listar EXATAMENTE o que faltou concluir (Arquivo/Linha) e CHAMAR O MODO 3"]
-    R_LOOP -->|"Modo 3 corrige o que faltou e reaciona o Modo 2"| R2
-    R3 -->|"PASS Garantido (100% conforme as normas)"| R4["Passo 4: Promover para PASS no Relatório, Plano e Checklist"]
+    R1["Step 1: Locate OWASP ID in Plan/Report & Technical Rules"] --> R2["Step 2: Surgical Inspection of Vulnerability Files & Lines"]
+    R2 --> R3{"Step 3: What is the Actual Verification Verdict (Mode 2)?"}
+    R3 -->|"PARTIAL or FAIL (Items still missing)"| R_LOOP["Update status to PARTIAL/FAIL, list EXACT missing items (File/Line) & INVOKE MODE 3"]
+    R_LOOP -->|"Mode 3 fixes missing items and re-invokes Mode 2"| R2
+    R3 -->|"PASS Guaranteed (100% compliant with standards)"| R4["Step 4: Promote to PASS in Report, Plan & Checklist"]
 ```
 
-### Passo a Passo Obrigatório do Modo 2:
+### Mandatory Step-by-Step for Mode 2:
 
-1. **Passo 1 — Localização do Contexto do `ID OWASP`:**
-   - Leia o item correspondente ao `<ID_OWASP>` em `owasp_iot_plano_resolucao.md`, `owasp_iot_relatorio_final.md` e `owasp_iot_checklist_progresso.md` para identificar todos os arquivos e linhas afetados.
-   - Consulte os critérios de aceite exatos daquele `<ID_OWASP>` em [verification_rules.md](./references/verification_rules.md) (ou execute o script auxiliar com `-VerifyId <ID_OWASP>` / `--verify-id <ID_OWASP>`).
-2. **Passo 2 — Inspeção Cirúrgica no Código/Configuração:**
-   - Inspecione diretamente todos os arquivos e linhas onde a vulnerabilidade estava localizada (e arquivos correlatos caso a lógica tenha sido movida/refatorada).
-   - Verifique rigorosamente se **todas** as ocorrências foram corrigidas e se não restou mitigação incompleta (ex.: corrigiu `strcpy` em 2 arquivos mas esqueceu 1, ou trocou `strcpy` por `strncpy` sem garantir terminação nula `\0`, ou validou versão OTA no código mas esqueceu de ativar a flag no `sdkconfig`).
-3. **Passo 3 — Veredito Estrito e Loop com o Modo 3 (Se `PARTIAL` ou `FAIL`):**
-   - Classifique o estado real do `<ID_OWASP>`:
-     - **Se o resultado for `⚠️ PARTIAL` (Parcialmente de Acordo) ou `❌ FAIL` (Totalmente em Desacordo):**
-       1. **PROIBIDO promover para `PASS`!**
-       2. Atualize o registro em `owasp_iot_relatorio_final.md` (movendo de `FAIL` para a seção `⚠️ PARTIAL`, se houve avanço parcial) e em `owasp_iot_plano_resolucao.md` registrando **exatamente o que faltou concluir (Arquivo(s), Linha(s) e requisito pendente)**.
-       3. **Acione imediatamente o Modo 3 (Agente Solucionador)** — via `invoke_subagent` (`self`, `Role: "OWASP ID Remediator - Modo 3"`) ou execução direta do protocolo do Modo 3 — passando especificamente **o diagnóstico do que faltou concluir** para aquele `ID OWASP`.
-       4. Após o Modo 3 aplicar a correção complementar, o Modo 2 reexecuta a inspeção cirúrgica (**Passo 2**). Esse **loop (`Modo 2` $\rightarrow$ `Modo 3` $\rightarrow$ `Modo 2`) deve continuar até que o Modo 2 garanta `✅ PASS`** *(exceto se houver impedimento físico de hardware externo impossível de resolver via software/configuração; nesse único caso, o loop encerra mantendo `⚠️ PARTIAL` nos 3 arquivos e explicando a limitação física ao usuário)*.
-     - **Se e somente se o resultado for `✅ PASS` (100% De Acordo com as Normas):**
-       - Prossiga para o **Passo 4**.
-4. **Passo 4 — Promoção para `PASS` nos 3 Arquivos (Somente após Garantia do Modo 2):**
-   - **`owasp_iot_plano_resolucao.md`:** Marque o checkbox como `[x]`, atualize o status para `🟢 Retestado e Aprovado (PASS)`, atualize o painel de contagem no topo e adicione uma linha na tabela **"3. Histórico de Problemas Resolvidos e Aprovados no Reteste"**.
-   - **`owasp_iot_relatorio_final.md`:** Mova a linha do `<ID_OWASP>` da tabela `❌ FAIL` ou `⚠️ PARTIAL` para a tabela `✅ PASS` e atualize os contadores do **Menu de Navegação Rápida no Topo**.
-   - **`owasp_iot_checklist_progresso.md`:** Atualize a coluna `Status` para `PASS` e `Notes / Evidências` com os arquivos e linhas verificados.
-   - **No Chat:** Responda de forma objetiva mostrando o histórico das iterações (`FAIL` $\rightarrow$ `PARTIAL` $\rightarrow$ `PASS`), a evidência verificada e a confirmação de atualização dos arquivos.
+1. **Step 1 — Locate Context for `<OWASP_ID>`:**
+   - Read the entry corresponding to `<OWASP_ID>` in `owasp_iot_remediation_plan.md`, `owasp_iot_final_report.md`, and `owasp_iot_progress_checklist.md` to identify all affected files and lines.
+   - Consult the exact acceptance criteria for `<OWASP_ID>` in [verification_rules.md](./references/verification_rules.md) (or run the helper script with `-VerifyId <OWASP_ID>` / `--verify-id <OWASP_ID>`).
+2. **Step 2 — Surgical Inspection of Code/Configuration:**
+   - Directly inspect all files and lines where the vulnerability was located (and related files if the logic was moved/refactored).
+   - Strictly verify whether **all** occurrences were fixed and no incomplete mitigation remains (e.g., fixed `strcpy` in 2 files but missed 1, replaced `strcpy` with `strncpy` without guaranteeing null termination `\0`, or validated OTA version in code but forgot to enable the flag in `sdkconfig`).
+3. **Step 3 — Strict Verdict & Closed Loop with Mode 3 (If `PARTIAL` or `FAIL`):**
+   - Classify the actual state of `<OWASP_ID>`:
+     - **If the result is `⚠️ PARTIAL` (Partially Compliant) or `❌ FAIL` (Fully Non-Compliant):**
+       1. **DO NOT promote to `PASS`!**
+       2. Update the record in `owasp_iot_final_report.md` (moving from `FAIL` to the `⚠️ PARTIAL` section if partial progress was made) and in `owasp_iot_remediation_plan.md`, recording **the exact missing items (File(s), Line(s), and pending requirement)**.
+       3. **Immediately invoke Mode 3 (Remediator Agent)** — via `invoke_subagent` (`self`, `Role: "OWASP ID Remediator - Mode 3"`) or direct execution of the Mode 3 protocol — passing specifically **the diagnosis of what still needs to be completed** for that `OWASP ID`.
+       4. After Mode 3 applies the complementary fix, Mode 2 re-runs the surgical inspection (**Step 2**). This **loop (`Mode 2` $\rightarrow$ `Mode 3` $\rightarrow$ `Mode 2`) must continue until Mode 2 guarantees `✅ PASS`** *(except if there is an external physical hardware limitation impossible to resolve via software/configuration; in that sole case, the loop ends while keeping `⚠️ PARTIAL` across all 3 files and explaining the physical limitation to the user)*.
+     - **If and only if the result is `✅ PASS` (100% Compliant with Standards):**
+       - Proceed to **Step 4**.
+4. **Step 4 — Promotion to `PASS` Across All 3 Files (Only After Mode 2 Guarantees It):**
+   - **`owasp_iot_remediation_plan.md`:** Check the box `[x]`, update the status to `🟢 Re-tested and Approved (PASS)`, update the top summary counters, and append a row to **"3. History of Resolved & Approved Issues (`PASS`)"**.
+   - **`owasp_iot_final_report.md`:** Move the `<OWASP_ID>` row from the `❌ FAIL` or `⚠️ PARTIAL` table to the `✅ PASS` table and update the counters in the **Quick Navigation Menu at the Top**.
+   - **`owasp_iot_progress_checklist.md`:** Update the `Status` column to `PASS` and `Notes / Evidence` with the verified files and lines.
+   - **In Chat:** Reply concisely showing the iteration history (`FAIL` $\rightarrow$ `PARTIAL` $\rightarrow$ `PASS`), the verified evidence, and confirmation that all tracking files were updated.
 
 ---
 
-## Modo 3: Resolução + Loop de Verificação por ID OWASP (`Targeted ID Remediation & Closed-Loop Verification`)
+## Mode 3: Targeted ID Remediation & Closed-Loop Verification (`Targeted ID Remediation & Closed-Loop Verification`)
 
-Quando o usuário (ou o Modo 2 durante um reteste incompleto) acionar o agente no **Modo 3** pedindo para **solucionar, corrigir ou resolver** um ou mais IDs OWASP específicos (`X, Y, Z`), o agente **NUNCA assume que sua própria correção virou `PASS` automaticamente**.
+When the user (or Mode 2 during an incomplete re-test) invokes the agent in **Mode 3** asking to **remediate, fix, or resolve** one or more specific OWASP IDs (`X, Y, Z`), the agent **NEVER assumes its own fix automatically became `PASS`**.
 
-O **Modo 3** apenas implementa a solução técnica nos arquivos/linhas indicados e entrega para o **Modo 2 (Verificador)** julgar. Se o Modo 2 detectar que ficou `PARTIAL` (ou `FAIL`), o Modo 2 devolve para o Modo 3 passando **exatamente o que faltou concluir**, repetindo o ciclo em loop até o Modo 2 garantir `PASS`:
+**Mode 3** only implements the technical fix at the indicated files/lines and hands it over to **Mode 2 (Verifier)** for judgment. If Mode 2 detects that it is `PARTIAL` (or `FAIL`), Mode 2 returns it to Mode 3 passing **the exact missing items**, repeating the cycle in a loop until Mode 2 guarantees `PASS`:
 
 ```mermaid
 flowchart LR
-    S1["Modo 3 (Passo 1): Ler Arquivos/Linhas Exatas e Pendências dos IDs (X, Y, Z)"] --> S2["Modo 3 (Passo 2): Implementar Correção Exclusivamente nos Pontos Mapeados"]
-    S2 --> S3["Modo 3 (Passo 3): Acionar Modo 2 (Verificador) Sem Promover Status Antes do Veredito"]
-    S3 --> V2{"Modo 2 Avalia: Ficou 100% PASS?"}
-    V2 -->|"Não (Ficou PARTIAL ou FAIL)"| S_DELTA["Modo 2 atualiza para PARTIAL/FAIL e chama Modo 3 passando O QUE FALTOU CONCLUIR"]
+    S1["Mode 3 (Step 1): Read Exact Files/Lines & Pending Gaps for IDs (X, Y, Z)"] --> S2["Mode 3 (Step 2): Implement Fix Exclusively at Mapped Points"]
+    S2 --> S3["Mode 3 (Step 3): Invoke Mode 2 (Verifier) Without Promoting Status Before Verdict"]
+    S3 --> V2{"Mode 2 Evaluates: Is it 100% PASS?"}
+    V2 -->|"No (PARTIAL or FAIL)"| S_DELTA["Mode 2 updates to PARTIAL/FAIL and invokes Mode 3 passing EXACT MISSING ITEMS"]
     S_DELTA --> S2
-    V2 -->|"Sim (Modo 2 garante PASS)"| S4["Modo 2 promove para PASS no Relatório, Plano e Checklist"]
+    V2 -->|"Yes (Mode 2 guarantees PASS)"| S4["Mode 2 promotes to PASS in Report, Plan & Checklist"]
 ```
 
-### Passo a Passo Obrigatório do Modo 3:
+### Mandatory Step-by-Step for Mode 3:
 
-1. **Passo 1 — Leitura Focada dos IDs OWASP (`X, Y, Z`) ou do Delta Pendente Enviado pelo Modo 2:**
-   - Se for a 1ª iteração: consulte `owasp_iot_plano_resolucao.md` e `owasp_iot_relatorio_final.md` para obter a **Localização Exata (`Arquivo(s)` e `Linha(s)`)** de todas as ocorrências do `ID OWASP`, além das regras em [verification_rules.md](./references/verification_rules.md).
-   - Se for uma rechamada vinda do **Modo 2** (após resultado `PARTIAL` ou `FAIL`): leia exatamente a lista do **"que faltou concluir"** (arquivos, linhas e controles residuais apontados pelo Modo 2).
-2. **Passo 2 — Implementação Exclusiva da Solução no Código/Configuração:**
-   - Aplique as alterações de código, configuração de build ou scripts necessárias para sanar **todas** as ocorrências mapeadas dos IDs OWASP `X, Y, Z`, sem alterar partes não relacionadas do projeto.
-   - **Regra Estrita:** O Modo 3 **NÃO** altera o status para `PASS` no relatório nem no checklist neste momento.
-3. **Passo 3 — Chamada Obrigatória do Modo 2 e Loop até Garantir `PASS`:**
-   - Concluída a edição do código, acione imediatamente o **Modo 2 (Verificação Pontual por ID OWASP)** (via subagente `self` com `Role: "OWASP ID Verifier - Modo 2"` ou executando estritamente os Passos 1 a 4 do Modo 2):
-     - Se o **Modo 2** avaliar que a correção ficou **`⚠️ PARTIAL`** (ex.: resolveu parte dos arquivos ou apenas parte do requisito da norma) ou **`❌ FAIL`**, o **Modo 2** atualizará o status intermediário para `PARTIAL`/`FAIL` especificando **o que faltou concluir** e **chamará novamente o Modo 3** para corrigir o restante.
-     - Esse **loop (`Modo 3` $\leftrightarrow$ `Modo 2`) continuará iterando** até que o **Modo 2** comprove que não há nenhuma pendência restante e emita o veredito final `✅ PASS`.
-4. **Passo 4 — Consolidação Final pelo Modo 2:**
-   - Somente quando o **Modo 2** garantir `✅ PASS`, os arquivos `owasp_iot_relatorio_final.md`, `owasp_iot_plano_resolucao.md` e `owasp_iot_checklist_progresso.md` terão o item promovido para `PASS`.
-   - Apresente ao usuário o resumo das alterações aplicadas em cada iteração e a confirmação do veredito final do Modo 2.
-
-
-
+1. **Step 1 — Focused Reading of OWASP IDs (`X, Y, Z`) or Remaining Delta Sent by Mode 2:**
+   - If 1st iteration: consult `owasp_iot_remediation_plan.md` and `owasp_iot_final_report.md` to obtain the **Exact Location (`File(s)` and `Line(s)`)** of all occurrences of the `OWASP ID`, plus the rules in [verification_rules.md](./references/verification_rules.md).
+   - If re-invoked by **Mode 2** (after a `PARTIAL` or `FAIL` verdict): read the exact list of **"missing items to complete"** (files, lines, and residual controls pointed out by Mode 2).
+2. **Step 2 — Exclusive Implementation of the Fix in Code/Configuration:**
+   - Apply the code, build configuration, or script changes required to remediate **all** mapped occurrences of OWASP IDs `X, Y, Z`, without altering unrelated parts of the project.
+   - **Strict Rule:** Mode 3 **DOES NOT** change the status to `PASS` in the report or checklist at this stage.
+3. **Step 3 — Mandatory Invocation of Mode 2 & Loop Until `PASS` is Guaranteed:**
+   - Once code edits are complete, immediately invoke **Mode 2 (Targeted ID Verification)** (via the `self` subagent with `Role: "OWASP ID Verifier - Mode 2"` or by strictly executing Steps 1 to 4 of Mode 2):
+     - If **Mode 2** determines that the fix is **`⚠️ PARTIAL`** (e.g., fixed only some files or part of the requirement) or **`❌ FAIL`**, **Mode 2** will update the intermediate status to `PARTIAL`/`FAIL` specifying **what still needs to be completed** and **will invoke Mode 3 again** to fix the remainder.
+     - This **loop (`Mode 3` $\leftrightarrow$ `Mode 2`) continues iterating** until **Mode 2** confirms no pending gaps remain and issues the final `✅ PASS` verdict.
+4. **Step 4 — Final Consolidation by Mode 2:**
+   - Only when **Mode 2** guarantees `✅ PASS` will `owasp_iot_final_report.md`, `owasp_iot_remediation_plan.md`, and `owasp_iot_progress_checklist.md` have the item promoted to `PASS`.
+   - Present a summary of the changes applied across each iteration and the confirmation of Mode 2's final verdict to the user.
