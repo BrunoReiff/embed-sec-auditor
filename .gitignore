@@ -1,0 +1,29 @@
+# --- Rascunhos locais (não fazem parte do agente) ---
+metodologia_owasp_iot_agente.md
+
+# --- Artefatos gerados pelo agente ao auditar um projeto ---
+owasp_iot_checklist_progresso.md
+owasp_iot_relatorio_final.md
+owasp_iot_plano_resolucao.md
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# --- Segredos (nunca versionar) ---
+.env
+*.key
+*.pem
+*.p12
+*.csr
+
+# --- SO / Editores ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+

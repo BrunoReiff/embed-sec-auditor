@@ -1,0 +1,12 @@
+[submodule "IOT_OWASP/embeddedappsec"]
+	path = IOT_OWASP/embeddedappsec
+	url = https://github.com/scriptingxss/embeddedappsec
+	branch = master
+[submodule "IOT_OWASP/owasp-fstm"]
+	path = IOT_OWASP/owasp-fstm
+	url = https://github.com/scriptingxss/owasp-fstm
+	branch = master
+[submodule "IOT_OWASP/owasp-istg"]
+	path = IOT_OWASP/owasp-istg
+	url = https://github.com/OWASP/owasp-istg
+	branch = main
