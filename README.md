@@ -93,10 +93,10 @@ Compatible with AI coding assistants that support the `.agents/` customization s
 
 ```mermaid
 flowchart LR
-    U(["User: Remediate ID X"]) --> M3["Mode 3: Applies fix at exact mapped files & lines"]
+    U["User: Remediate ID X"] --> M3["Mode 3: Applies fix at exact mapped files and lines"]
     M3 --> M2{"Mode 2: Strict compliance judge"}
-    M2 -->|"PARTIAL / FAIL + exact missing items"| M3
-    M2 -->|"100% PASS guaranteed"| OK["Promotes to PASS across HTML Report, Plan & Checklist"]
+    M2 -->|PARTIAL or FAIL: missing items| M3
+    M2 -->|100% PASS guaranteed| OK["Promotes to PASS across HTML Report, Plan, and Checklist"]
 ```
 
 - **Mode 3 never self-approves (`PASS`)** — After applying a fix, it immediately invokes Mode 2 to audit the change.

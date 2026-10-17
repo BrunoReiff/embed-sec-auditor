@@ -31,31 +31,31 @@ This Skill instructs the agent to operate in **three complementary operational m
 
 ```mermaid
 flowchart TD
-    USER(["User Request"]) --> ROUTER{"Which Use Case / Mode?"}
+    USER["User Request"] --> ROUTER{"Which Use Case or Mode?"}
 
     %% USE CASE 1: MODE 1
-    ROUTER -->|"Case 1: Audit Project (Mode 1)"| M1_E1["1. General Discovery (Artifacts, RTOS, SDK, Network, Hardware)"]
-    M1_E1 --> M1_E2["2. Scope Classification (4 Categories of Section 6.1)"]
-    M1_E2 --> M1_E3["3. State-Tracking HTML Checklist (owasp_iot_progress_checklist.html - Part C FSTM Optional)"]
-    M1_E3 --> M1_E4["4. Sequential Execution Section 6.2 (Modules 1 to 6 recording Exact File & Line)"]
-    M1_E4 --> M1_E5["5. Generates Static HTML Zero-Scroll Report (FAIL 1st, PARTIAL 2nd, PASS 3rd) + Linked HTML Remediation Plan"]
+    ROUTER -->|Case 1: Audit Project Mode 1| M1_E1["1. General Discovery: Artifacts, RTOS, SDK, Network, Hardware"]
+    M1_E1 --> M1_E2["2. Scope Classification: 4 Categories of Section 6.1"]
+    M1_E2 --> M1_E3["3. State-Tracking HTML Checklist: owasp_iot_progress_checklist.html"]
+    M1_E3 --> M1_E4["4. Sequential Execution Section 6.2: Modules 1 to 6 with File and Line"]
+    M1_E4 --> M1_E5["5. Generates Static HTML Zero-Scroll Report and Linked Remediation Plan"]
 
-    %% USE CASE 2: MODE 2 (DIRECT OR VIA EXTERNAL AGENT)
-    ROUTER -->|"Case 2: Verify Specific OWASP ID (Mode 2)"| M2_READ["Mode 2: Reads File(s), Line(s) & Criteria for the OWASP ID"]
-    M2_READ --> M2_INSP["Mode 2: Surgical Inspection of Code / Configuration"]
-    M2_INSP --> M2_JUDGE{"What is Mode 2's Verdict?"}
+    %% USE CASE 2: MODE 2
+    ROUTER -->|Case 2: Verify Specific OWASP ID Mode 2| M2_READ["Mode 2: Reads File, Line, and Criteria for OWASP ID"]
+    M2_READ --> M2_INSP["Mode 2: Surgical Inspection of Code and Configuration"]
+    M2_INSP --> M2_JUDGE{"What is Mode 2 Verdict?"}
 
-    %% USE CASE 3: MODE 3 (REMEDIATION + CLOSED LOOP)
-    ROUTER -->|"Case 3: Remediate IDs X, Y, Z (Mode 3)"| M3_LOC["Mode 3: Reads Exact Location (File/Line) or Remaining Gaps for ID"]
-    M3_LOC --> M3_FIX["Mode 3: Implements Fix Exclusively at Mapped Points (Without Marking PASS)"]
-    M3_FIX -->|"Triggers Verifier"| M2_INSP
+    %% USE CASE 3: MODE 3
+    ROUTER -->|Case 3: Remediate IDs X, Y, Z Mode 3| M3_LOC["Mode 3: Reads Exact File and Line or Remaining Gaps for ID"]
+    M3_LOC --> M3_FIX["Mode 3: Implements Fix Exclusively at Mapped Points"]
+    M3_FIX -->|Triggers Verifier| M2_INSP
 
     %% CLOSED LOOP MODE 2 <-> MODE 3
-    M2_JUDGE -->|"PARTIAL or FAIL (Items still missing)"| M2_DELTA["Mode 2: Updates HTML to PARTIAL/FAIL & Records EXACT MISSING ITEMS (File/Line)"]
-    M2_DELTA -->|"Invokes Mode 3 passing missing items"| M3_LOC
+    M2_JUDGE -->|PARTIAL or FAIL: Items still missing| M2_DELTA["Mode 2: Updates HTML to PARTIAL or FAIL and Records Missing Items"]
+    M2_DELTA -->|Invokes Mode 3 passing missing items| M3_LOC
 
     %% EXCLUSIVE PROMOTION BY MODE 2
-    M2_JUDGE -->|"PASS Guaranteed (100% Compliant)"| M2_PROMOTE["Mode 2: Promotes to PASS in HTML Final Report, Remediation Plan & Checklist"]
+    M2_JUDGE -->|PASS Guaranteed: 100% Compliant| M2_PROMOTE["Mode 2: Promotes to PASS in HTML Final Report, Plan, and Checklist"]
 ```
 
 ---
@@ -66,10 +66,10 @@ Whenever invoked to audit an embedded/IoT project in full (or resume where it le
 
 ```mermaid
 flowchart TD
-    A["Step 1: General Project Discovery (Artifacts & Technologies)"] --> B["Step 2: Scope Classification (Section 6.1)"]
-    B --> C["Step 3: Initialize or Resume Static HTML Checklist (Where it stopped / Where to go)"]
-    C --> D["Step 4: Sequential Test Execution (Section 6.2: Modules 1 to 6 with Exact File & Line)"]
-    D --> E["Step 5: Static HTML Zero-Scroll Report + Linked Remediation Plan"]
+    A["Step 1: General Project Discovery (Artifacts and Technologies)"] --> B["Step 2: Scope Classification (Section 6.1)"]
+    B --> C["Step 3: Initialize or Resume Static HTML Checklist"]
+    C --> D["Step 4: Sequential Test Execution (Modules 1 to 6 with File and Line)"]
+    D --> E["Step 5: Static HTML Zero-Scroll Report and Linked Remediation Plan"]
 ```
 
 ---
@@ -237,11 +237,11 @@ Instead, **Mode 2** acts as a **strict compliance judge** and, if it identifies 
 
 ```mermaid
 flowchart TD
-    R1["Step 1: Locate OWASP ID in HTML Plan/Report & Technical Rules"] --> R2["Step 2: Surgical Inspection of Vulnerability Files & Lines"]
-    R2 --> R3{"Step 3: What is the Actual Verification Verdict (Mode 2)?"}
-    R3 -->|"PARTIAL or FAIL (Items still missing)"| R_LOOP["Update HTML status to PARTIAL/FAIL, list EXACT missing items (File/Line) & INVOKE MODE 3"]
-    R_LOOP -->|"Mode 3 fixes missing items and re-invokes Mode 2"| R2
-    R3 -->|"PASS Guaranteed (100% compliant with standards)"| R4["Step 4: Promote to PASS in HTML Report, Plan & Checklist"]
+    R1["Step 1: Locate OWASP ID in HTML Plan, Report, and Rules"] --> R2["Step 2: Surgical Inspection of Vulnerability Files and Lines"]
+    R2 --> R3{"Step 3: What is the Actual Verification Verdict?"}
+    R3 -->|PARTIAL or FAIL: Items still missing| R_LOOP["Update HTML status to PARTIAL or FAIL, list missing items, and invoke Mode 3"]
+    R_LOOP -->|Mode 3 fixes missing items and re-invokes Mode 2| R2
+    R3 -->|PASS Guaranteed: 100% compliant| R4["Step 4: Promote to PASS in HTML Report, Plan, and Checklist"]
 ```
 
 ### Mandatory Step-by-Step for Mode 2:
@@ -277,12 +277,12 @@ When the user (or Mode 2 during an incomplete re-test) invokes the agent in **Mo
 
 ```mermaid
 flowchart LR
-    S1["Mode 3 (Step 1): Read Exact Files/Lines & Pending Gaps for IDs (X, Y, Z)"] --> S2["Mode 3 (Step 2): Implement Fix Exclusively at Mapped Points"]
-    S2 --> S3["Mode 3 (Step 3): Invoke Mode 2 (Verifier) Without Promoting Status Before Verdict"]
+    S1["Mode 3: Read Exact Files, Lines, and Pending Gaps for IDs"] --> S2["Mode 3: Implement Fix Exclusively at Mapped Points"]
+    S2 --> S3["Mode 3: Invoke Mode 2 Verifier"]
     S3 --> V2{"Mode 2 Evaluates: Is it 100% PASS?"}
-    V2 -->|"No (PARTIAL or FAIL)"| S_DELTA["Mode 2 updates HTML to PARTIAL/FAIL and invokes Mode 3 passing EXACT MISSING ITEMS"]
+    V2 -->|No: PARTIAL or FAIL| S_DELTA["Mode 2 updates HTML and invokes Mode 3 with missing items"]
     S_DELTA --> S2
-    V2 -->|"Yes (Mode 2 guarantees PASS)"| S4["Mode 2 promotes to PASS in HTML Report, Plan & Checklist"]
+    V2 -->|Yes: 100% PASS| S4["Mode 2 promotes to PASS in HTML Report, Plan, and Checklist"]
 ```
 
 ### Mandatory Step-by-Step for Mode 3:
