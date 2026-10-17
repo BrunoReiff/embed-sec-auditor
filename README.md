@@ -26,8 +26,7 @@ Supports ESP-IDF, Arduino, PlatformIO, FreeRTOS, Zephyr, Embedded Linux (Yocto/B
     │   ├── report_template.md        ← "Zero-scroll" compliance report template
     │   └── remediation_tracker_template.md ← Remediation & re-verification plan by OWASP ID
     └── scripts/
-        ├── owasp_iot_scanner.ps1     ← Discovery & triage helper script (Windows PowerShell)
-        └── owasp_iot_scanner.py      ← Discovery & triage helper script (Linux / macOS / Python)
+        └── owasp_iot_scanner.py      ← Discovery & triage helper script (Cross-platform Python 3)
 IOT_OWASP/                            ← Upstream reference sources (git submodules of official OWASP repos)
 ├── embeddedappsec/
 ├── owasp-fstm/
@@ -102,19 +101,14 @@ flowchart LR
 
 ---
 
-## 🔧 Helper Scripts (Optional Manual Execution)
-
-```powershell
-# Windows (PowerShell)
-powershell -ExecutionPolicy Bypass -File .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.ps1 -TargetDir <project_path> -InitChecklist
-```
+## 🔧 Helper Script (Optional Manual Execution)
 
 ```bash
-# Linux / macOS (Python 3)
+# Cross-platform (Linux / macOS / Windows with Python 3)
 python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <project_path> --init-checklist
 ```
 
-Use `-VerifyId <OWASP_ID>` / `--verify-id <OWASP_ID>` to quickly locate all occurrences of a specific ID across the tracking files during Mode 2 re-verification.
+Use `--verify-id <OWASP_ID>` to quickly locate all occurrences of a specific ID across the tracking files during Mode 2 re-verification.
 
 ---
 

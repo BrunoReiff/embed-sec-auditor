@@ -77,9 +77,7 @@ flowchart TD
 Before running any vulnerability test, perform a complete scan of the target project's directory and file structure to identify all present **artifacts** and **technologies**:
 
 1. **Run the helper discovery script** or inspect the directories:
-   - **Windows (Native PowerShell):** [owasp_iot_scanner.ps1](./scripts/owasp_iot_scanner.ps1)
-     `powershell -ExecutionPolicy Bypass -File .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.ps1 -TargetDir <project_path> -InitChecklist`
-   - **Linux/macOS (Python):** [owasp_iot_scanner.py](./scripts/owasp_iot_scanner.py)
+   - **Cross-Platform (Python 3):** [owasp_iot_scanner.py](./scripts/owasp_iot_scanner.py)
      `python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <project_path> --init-checklist`
 2. **Explicitly inventory:**
    - **Languages & Source Code:** C, C++, Assembly, Python, Lua, Shell scripts, JavaScript/TypeScript, HTML/CSS.
