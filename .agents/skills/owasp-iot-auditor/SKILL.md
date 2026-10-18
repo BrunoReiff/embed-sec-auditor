@@ -16,7 +16,7 @@ description: >-
 > **Universal Defaults & Immutable HTML Skeleton:**
 > 1. **Default Language — English:** All generated reports, remediation plans, and checklists **MUST be written in English by default**.
 > 2. **Default Output Format — Static HTML (`.html`) for Single-Tab Navigation:** Outputs are standalone static HTML files (`owasp_iot_final_report.html`, `owasp_iot_remediation_plan.html`, and `owasp_iot_progress_checklist.html`) sharing a unified top navigation bar.
-> 3. **🔒 Immutable HTML Skeleton Rule:** The HTML structure (`<head>`, `<style>`, `<nav>`, `<section>`, `<thead>`, CSS classes, `<script>`) is **100% FROZEN**. Agents ONLY insert findings at declared anchor comments (`<!-- ANCHOR: ... -->`), toggle checkboxes, and update status badges/counts. Never rewrite 400+ lines of HTML from scratch.
+> 3. **🔒 Immutable HTML Skeleton & Anchor Preservation:** The HTML structure (`<head>`, `<style>`, `<nav>`, `<section>`, `<thead>`, CSS classes, `<script>`) is **100% FROZEN**. When inserting findings at declared anchors (`<!-- ANCHOR: ... -->`), **ALWAYS preserve the anchor comment** in `ReplacementContent` (or use `owasp_iot_scanner.py --inject-anchor`) so subsequent findings and re-tests never lose the insertion anchor. Never rewrite 400+ lines of HTML from scratch.
 
 ---
 

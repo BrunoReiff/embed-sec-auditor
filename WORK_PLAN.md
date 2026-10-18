@@ -86,7 +86,7 @@ tests/fixtures/mock_iot_device/
    - Verify Modules 1 through 6 in strict sequence.
    - Confirm every detected vulnerability records exact file and line ranges (`file:///.../src/main.c#L42-L48`).
 3. **Fast-Path HTML Generation (< 30s) & Immutable Skeleton Enforcement:**
-   - **Strictly Immutable HTML Structure:** Confirm that the agent modifies ONLY content at the explicit anchors (`<!-- ANCHOR: ... -->`), toggles checkboxes, and updates status badges/KPI counters. Under NO circumstances may the agent alter `<head>`, `<style>`, `<nav>`, `<section>`, `<thead>`, or `<script>` tags.
+   - **Strictly Immutable HTML Structure & Anchor Preservation:** Confirm that the agent modifies ONLY content at the explicit anchors (`<!-- ANCHOR: ... -->`), **always preserving the anchor comments** during single-batch or incremental replacements (or via `owasp_iot_scanner.py --inject-anchor`), toggles checkboxes, and updates status badges/KPI counters. Under NO circumstances may the agent alter `<head>`, `<style>`, `<nav>`, `<section>`, `<thead>`, or `<script>` tags.
    - Confirm NO full file rewrites occur.
    - Verify all navigation links between reports work inside a single browser tab.
 

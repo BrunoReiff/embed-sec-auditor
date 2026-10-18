@@ -355,6 +355,35 @@ def check_checklist_progress(checklist_path: Path):
     }
 
 
+def inject_into_html_anchor(html_path: Path, anchor_name: str, new_content: str) -> dict:
+    """
+    Safely injects HTML content into an anchor section while PRESERVING the anchor comment.
+    Guarantees:
+    - The anchor comment <!-- ANCHOR: <anchor_name> --> is NEVER deleted or replaced.
+    - Content is placed immediately after the anchor comment.
+    - Batch and sequential insertions succeed repeatedly without losing the insertion point.
+    """
+    if not html_path.exists():
+        return {"success": False, "error": f"Target file does not exist: {html_path}"}
+
+    text = html_path.read_text(encoding="utf-8")
+    pattern = re.compile(rf"(<!--\s*ANCHOR:\s*{re.escape(anchor_name)}\s*-->)", re.IGNORECASE)
+    match = pattern.search(text)
+    if not match:
+        return {"success": False, "error": f"Anchor comment not found: <!-- ANCHOR: {anchor_name} -->"}
+
+    anchor_str = match.group(1)
+    clean_content = new_content.strip()
+
+    if clean_content in text:
+        return {"success": True, "message": "Content already present under anchor", "anchor": anchor_name}
+
+    replacement = f"{anchor_str}\n          {clean_content}"
+    updated_text = text.replace(anchor_str, replacement, 1)
+    html_path.write_text(updated_text, encoding="utf-8")
+    return {"success": True, "message": "Content injected successfully while preserving anchor", "anchor": anchor_name}
+
+
 def main():
     parser = argparse.ArgumentParser(description="OWASP IoT & Embedded Security Auditor High-Performance Helper")
     parser.add_argument("--target", default=".", help="Root directory of the embedded/IoT project to scan")
@@ -366,6 +395,10 @@ def main():
     parser.add_argument("--init-remediation", action="store_true", help="Initializes the static HTML remediation plan in the project if it does not exist")
     parser.add_argument("--init-report", action="store_true", help="Initializes the static HTML final report in the project if it does not exist")
     parser.add_argument("--init-all", action="store_true", help="Initializes all 3 static HTML tracking files in the project if they do not exist")
+    parser.add_argument("--inject-target", choices=["report", "remediation", "checklist"], help="Target HTML file for safe anchor injection")
+    parser.add_argument("--inject-anchor", default="", help="Anchor name (e.g., INSERT_FAIL_ROWS_HERE, INSERT_FAIL_CARDS_HERE)")
+    parser.add_argument("--inject-content", default="", help="HTML string or snippet to inject below the anchor")
+    parser.add_argument("--inject-content-file", default="", help="Path to text/HTML file containing content to inject")
     args = parser.parse_args()
 
     target_dir = Path(args.target).resolve()
@@ -374,6 +407,23 @@ def main():
     remediation_path = target_dir / args.remediation
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
     date_str = datetime.now().strftime("%Y-%m-%d")
+
+    # Safe Anchor Injection Mode
+    if args.inject_anchor.strip():
+        anchor = args.inject_anchor.strip()
+        target_map = {
+            "report": report_path,
+            "remediation": remediation_path,
+            "checklist": checklist_path,
+        }
+        dest_file = target_map.get(args.inject_target, report_path)
+        content_to_inject = args.inject_content
+        if args.inject_content_file and Path(args.inject_content_file).exists():
+            content_to_inject = Path(args.inject_content_file).read_text(encoding="utf-8")
+
+        res = inject_into_html_anchor(dest_file, anchor, content_to_inject)
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return
 
     do_checklist = args.init_checklist or args.init_all
     do_remediation = args.init_remediation or args.init_all

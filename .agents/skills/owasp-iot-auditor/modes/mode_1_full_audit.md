@@ -125,8 +125,27 @@ Classify the target project across the 4 categories of Section 6.1 to activate t
 > [!IMPORTANT]
 > **Strictly Immutable Skeleton Rule:**
 > 1. Copy templates via `python3 .../owasp_iot_scanner.py --target . --init-all`.
-> 2. Perform **single-batch replacements** using `replace_file_content` targeting ONLY the declared anchors (`<!-- ANCHOR: ... -->`).
-> 3. Zero structural changes to CSS, headers, layout, or script tags.
+> 2. Zero structural changes to CSS, headers, layout, or script tags.
+
+> [!CRITICAL]
+> **Anchor Preservation Protocol (NEVER Delete Anchor Comments):**
+> When inserting rows (`<tr>`) or remediation cards (`<article>`), **the anchor comment `<!-- ANCHOR: ... -->` MUST ALWAYS be preserved at the top of the section**.
+> - **Why this is critical:** If the anchor comment is replaced or deleted on the first insertion, you will lose the anchor reference for subsequent findings or incremental re-tests!
+> - **Safe `replace_file_content` Pattern:** Always include the anchor comment at the beginning of `ReplacementContent`:
+>   ```html
+>   TargetContent:
+>   <!-- ANCHOR: INSERT_FAIL_ROWS_HERE -->
+>
+>   ReplacementContent:
+>   <!-- ANCHOR: INSERT_FAIL_ROWS_HERE -->
+>   <tr id="row-<OWASP_ID_1>">...</tr>
+>   <tr id="row-<OWASP_ID_2>">...</tr>
+>   ```
+> - **Automated Python Injection Helper (Guaranteed Anchor Preservation):**
+>   Alternatively, use the scanner helper to inject content without touching the anchor:
+>   ```bash
+>   python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target . --inject-target report --inject-anchor INSERT_FAIL_ROWS_HERE --inject-content "<tr id=\"row-...\">...</tr>"
+>   ```
 
 #### Anchor Injection Mapping:
 
@@ -199,3 +218,4 @@ Classify the target project across the 4 categories of Section 6.1 to activate t
   </div>
 </article>
 ```
+

@@ -84,8 +84,13 @@ Under the **Strictly Immutable HTML Skeleton Rule**, update the 3 tracking files
      <input type="checkbox" checked>
      ```
    - Update the badge to `<span class="badge badge-pass">✅ PASS (Verified)</span>`.
-   - Append an entry to `<tbody id="tbody-resolved-history">`:
+   - Append an entry to `<tbody id="tbody-resolved-history">` preserving the anchor comment:
      ```html
+     TargetContent:
+     <!-- ANCHOR: INSERT_RESOLVED_HISTORY_ROWS_HERE -->
+
+     ReplacementContent:
+     <!-- ANCHOR: INSERT_RESOLVED_HISTORY_ROWS_HERE -->
      <tr>
        <td><code><YYYY-MM-DD HH:MM></code></td>
        <td><code><OWASP_ID></code></td>
@@ -100,3 +105,4 @@ Under the **Strictly Immutable HTML Skeleton Rule**, update the 3 tracking files
 
 3. **In `owasp_iot_progress_checklist.html`:**
    - In the target row for `<OWASP_ID>`, replace the status cell with `<span class="badge badge-pass">PASS</span>` and update notes with verified fix details.
+

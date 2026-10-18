@@ -20,7 +20,7 @@ description: Mandatory operational rules for the OWASP IoT & Embedded Security A
 3. **🔒 Immutable HTML Skeleton & Strict Anchor Modification Rule:**
    - **The HTML skeleton is 100% IMMUTABLE:** The agent is **strictly forbidden** from altering any HTML layout, `<head>`, `<style>`, `<nav>`, section containers (`<section id="...">`), table headers (`<thead>`), CSS classes, or JavaScript `<script>` blocks.
    - **What the Agent May Modify (Exclusively):**
-     1. **Anchor Injections:** Insert findings rows (`<tr>`) or remediation cards (`<article>`) **exclusively** at the declared anchor comments (`<!-- ANCHOR: INSERT_..._HERE -->`).
+     1. **Anchor Injections (With Strict Anchor Preservation):** Insert findings rows (`<tr>`) or remediation cards (`<article>`) **exclusively** at the declared anchor comments (`<!-- ANCHOR: INSERT_..._HERE -->`), **always preserving the anchor comment itself** in the document so that subsequent findings or incremental re-tests retain their insertion point.
      2. **Status Transitions & Checkbox Toggles (Modes 2 & 3):** When a vulnerability is re-tested and verified, the agent may move the `<tr>` row between tables (e.g. from `#tbody-fail` / `#tbody-partial` to `#tbody-pass`), toggle checkboxes to checked (`<input type="checkbox" checked>`) in `owasp_iot_remediation_plan.html`, append approved entries to `#tbody-resolved-history`, and update status badges in `owasp_iot_progress_checklist.html`.
      3. **Metadata & KPI Counts:** Update count numbers (`id="count-fail"`, etc.) and date strings.
    - **Zero structural HTML alterations are permitted.**

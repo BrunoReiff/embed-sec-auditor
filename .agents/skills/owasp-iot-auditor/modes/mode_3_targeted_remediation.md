@@ -62,3 +62,4 @@ Immediately after applying the fix, invoke Mode 2:
   - Trigger Mode 2 again.
 - **Repeat until Mode 2 confirms 100% compliance and guarantees `PASS`.**
 - Once Mode 2 certifies `PASS`, Mode 2 handles all status updates in `owasp_iot_final_report.html`, `owasp_iot_remediation_plan.html`, and `owasp_iot_progress_checklist.html`.
+
