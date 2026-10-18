@@ -1,110 +1,71 @@
-# Strategic Work Plan — 3-Tier OWASP IoT & Embedded Security Auditor Agent
+# Strategic Work Plan — OWASP IoT & Embedded Security Auditor Agent
 
 > [!NOTE]
-> **Architecture Baseline:** This work plan operationalizes, benchmarks, and maintains the 3-Tier Agent Architecture for embedded systems and IoT security auditing, following the unified OWASP standard (Embedded AppSec, ISTG, ISVS, and FSTM).
+> **Core Objective:** The purpose of this project is NOT to build a software testing framework with mock fixtures, but rather to build an autonomous AI Security Auditor Agent that inspects real-world embedded and IoT codebases, pinpoints security flaws according to the unified OWASP standards, and organizes findings clearly for the user in actionable, single-tab static HTML interfaces.
 
 ---
 
-## 1. Executive Summary & Architectural Overview
+## 1. Executive Summary & 3-Tier Architecture
 
-The agent is decoupled into three distinct operational layers to minimize context load, reduce token cost, and guarantee deterministic, sub-30-second audit artifact generation:
+The system decouples knowledge and instructions into 3 operational layers to guarantee ultra-fast response times, zero token waste, and deterministic report generation:
 
 ```mermaid
 flowchart TD
     subgraph Level_1["Level 1: Global Rules Engine (Always-On)"]
         L1_Rule["owasp-iot-agent-rule.md"]
-        L1_Core["• Language Policy (Default English)<br>• Single-Tab Static HTML Outputs<br>• Mode Router (Modes 1, 2, 3)<br>• Fast-Path Template Injection Protocol"]
+        L1_Core["• Language Policy (Default English)<br>• Single-Tab Static HTML Outputs<br>• Mode Router (Modes 1, 2, 3)<br>• Fast-Path Template Injection Protocol<br>• Immutable HTML Skeleton Enforcement"]
     end
 
     subgraph Level_2["Level 2: Tactical Workflow (Activated on Demand)"]
-        L2_Skill["SKILL.md (owasp-iot-auditor)"]
-        L2_Core["• Step 1: General Discovery<br>• Step 2: Scope Classification (6.1)<br>• Step 3: State-Tracking Checklist<br>• Step 4: Sequential Execution (Modules 1-6)<br>• Step 5: Fast-Path Template Injection (< 30s)"]
+        L2_Skill["SKILL.md (Master Router)"]
+        L2_Modes["Dedicated Mode Manuals:<br>• mode_1_full_audit.md (Lead Auditor)<br>• mode_2_targeted_verification.md (Strict Judge)<br>• mode_3_targeted_remediation.md (Surgical Remediator)"]
     end
 
     subgraph Level_3["Level 3: On-Demand Heavy Knowledge & Tooling (JIT)"]
         L3_Rules["references/verification_rules.md<br>(Surgical regex & criteria)"]
         L3_Templates["resources/*.html<br>(Pre-styled single-tab templates)"]
-        L3_Scripts["scripts/owasp_iot_scanner.py<br>(Discovery & triage automation)"]
+        L3_Scripts["scripts/owasp_iot_scanner.py<br>(Single-pass tree search & safe anchor injection)"]
     end
 
     L1_Rule -->|Routes & Invokes| L2_Skill
-    L2_Skill -->|Reads on Demand| L3_Rules
-    L2_Skill -->|Initializes & Populates| L3_Templates
-    L2_Skill -->|Executes Helpers| L3_Scripts
+    L2_Skill -->|Dispatches Mode| L2_Modes
+    L2_Modes -->|Reads on Demand| L3_Rules
+    L2_Modes -->|Initializes & Populates| L3_Templates
+    L2_Modes -->|Executes Helpers| L3_Scripts
 ```
 
 ---
 
-## 2. Work Plan Milestones & Roadmap
+## 2. Agent Delivery Roadmap & Milestones
 
 | Milestone | Objective | Deliverables | Status |
 | :--- | :--- | :--- | :--- |
-| **M1: Architecture Baseline & Boundary Enforcement** | Ensure strict isolation between Levels 1, 2, and 3 with modular mode files (`mode_1_full_audit.md`, `mode_2_targeted_verification.md`, `mode_3_targeted_remediation.md`) and a lean Master Router `SKILL.md`. | Modular mode documents, Master Router `SKILL.md` (~5 KB), updated `owasp-iot-agent-rule.md`, and anchor tags. | **Completed** |
-| **M2: Synthetic Testbed & Mock Project** | Create a deterministic test suite containing deliberate vulnerabilities across all 6 modules. | `tests/fixtures/mock_iot_device/` with vulnerable C/C++, headers, configs, and OTA code. | **Next (Sprint 1)** |
-| **M3: End-to-End Functional Validation** | Verify Mode 1, Mode 2, and Mode 3 execution flows against the synthetic testbed. | Automated test run logs, validated HTML reports, and closed-loop Mode 2 $\leftrightarrow$ Mode 3 cycle. | **Sprint 2** |
-| **M4: Benchmarking & Latency Profiling** | Measure token consumption, execution latency, and template population duration. | Benchmark report confirming template population < 30s and zero formatting bugs. | **Sprint 2** |
-| **M5: Production Release & Continuous Sync** | Finalize release documentation, enforce auto-sync rules, and package as installable plugin. | Synchronized global config (`~/.gemini/config/`), GitHub `main` branch, tag release. | **Sprint 3** |
+| **M1: Modular 3-Tier Architecture** | Decouple the monolithic skill into specialized mode instructions and a lightweight Master Router. | `SKILL.md` (~5 KB), `modes/mode_1_full_audit.md`, `modes/mode_2_targeted_verification.md`, and `modes/mode_3_targeted_remediation.md`. | **Completed** |
+| **M2: Fast-Path Template Engine & Safe Injection** | Enable instant (< 30s) template population with strict anchor preservation and 100% immutable HTML structure. | Anchor-preserving injection in `owasp_iot_scanner.py`, explicit anchor comments in templates, and anchor preservation protocols. | **Completed** |
+| **M3: Real-World Audit Readiness & Polish** | Verify agent readiness across common embedded ecosystems (ESP-IDF, Arduino, PlatformIO, Zephyr, Embedded Linux) when executed by user prompts. | Auditing guidelines, single-tab cross-link validation, and zero-dead-links verification. | **Active / Ready** |
+| **M4: Continuous Sync & Deployment** | Enforce machine-wide synchronization and version control. | Automated sync to `~/.gemini/config/` and clean remote repository on GitHub `origin main`. | **Completed** |
 
 ---
 
-## 3. Detailed Work Breakdown Structure (WBS)
+## 3. Operational Workflow for Real-World Audits
 
-### Phase 1: Synthetic Testbed Construction (`mock_iot_device`)
+### 3.1. Mode 1 — Full Project Audit & Error Organization
+1. **Target Inspection:** The user points the agent to an embedded codebase (e.g. *"Audit this project with the owasp-iot-auditor skill"*).
+2. **Instant Initialization:** The agent initializes the 3 static HTML tracking files in 5ms via `python3 .../owasp_iot_scanner.py --target <path> --init-all`.
+3. **Tree Search Discovery & Scope (Section 6.1):** High-speed single-pass tree search classifies whether Firmware (1), Build (2), Backend (3), or Web UI (4) are present.
+4. **Sequential Evaluation (Section 6.2):** Evaluates Modules 1 to 6 in strict order, mandatorily recording exact file and line ranges (`file:///abs/path#Lxx-Lyy`) for every finding.
+5. **Organized Single-Tab Output:** Populates `owasp_iot_final_report.html`, `owasp_iot_remediation_plan.html`, and `owasp_iot_progress_checklist.html` without modifying the HTML skeleton, placing critical FAIL items first for zero-scroll visibility.
 
-To test the auditor without risk to production hardware, create a self-contained simulated IoT firmware project containing intentional flaws mapped to the 6 modules of Section 6.2:
+### 3.2. Mode 2 — Targeted Re-verification (Strict Judge)
+1. Triggered on specific IDs (e.g. *"Verify ID ISTG-FW-SCRT-003"*).
+2. Does NOT rescan the project; inspects only the affected files and lines against `verification_rules.md`.
+3. If gaps remain, records delta missing items and commands Mode 3 in a closed loop.
+4. When 100% compliant, promotes to PASS and toggles checkboxes.
 
-```
-tests/fixtures/mock_iot_device/
-├── CMakeLists.txt              # Build configuration with disabled hardening flags
-├── sdkconfig                   # ESP-IDF config with disabled Secure Boot & Anti-Rollback
-├── platformio.ini              # PlatformIO config with unpinned/outdated libraries
-├── include/
-│   ├── config.h                # Hardcoded Wi-Fi/MQTT credentials and private key
-│   └── ota_update.h            # Firmware update function signatures
-└── src/
-    ├── main.c                  # Module 1: Unsafe strcpy/sprintf in UART parser
-    ├── network.c               # Module 2: TLS verification bypassed (setInsecure)
-    ├── debug_console.c         # Module 3: Verbose UART logging leaking secrets
-    ├── ota_handler.c           # Module 4: Unauthenticated OTA routine without signature check
-    └── mqtt_client.c           # Module 5: Wildcard topic '#' subscription, anonymous broker
-```
-
-#### Acceptance Criteria for Phase 1:
-- [ ] At least 1 deliberate vulnerability per module (total &ge; 6 distinct flaws).
-- [ ] Clear expected verdicts (`FAIL` for missing controls, `PARTIAL` for incomplete checks, `PASS` for verified safe functions).
-
----
-
-### Phase 2: Mode-by-Mode Rigorous Validation
-
-#### 2.1. Mode 1: Full Project Audit Verification
-1. **Discovery & Classification (High-Speed Tree Search):**
-   - Execute `python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target tests/fixtures/mock_iot_device --init-all`.
-   - Verify single-pass recursive tree search execution (`os.scandir` with early directory pruning and size limits), achieving sub-second response time.
-   - Verify that Section 6.1 correctly classifies Categories 1 (Embedded Code) and 2 (Build System).
-2. **Sequential Module Execution:**
-   - Verify Modules 1 through 6 in strict sequence.
-   - Confirm every detected vulnerability records exact file and line ranges (`file:///.../src/main.c#L42-L48`).
-3. **Fast-Path HTML Generation (< 30s) & Immutable Skeleton Enforcement:**
-   - **Strictly Immutable HTML Structure & Anchor Preservation:** Confirm that the agent modifies ONLY content at the explicit anchors (`<!-- ANCHOR: ... -->`), **always preserving the anchor comments** during single-batch or incremental replacements (or via `owasp_iot_scanner.py --inject-anchor`), toggles checkboxes, and updates status badges/KPI counters. Under NO circumstances may the agent alter `<head>`, `<style>`, `<nav>`, `<section>`, `<thead>`, or `<script>` tags.
-   - Confirm NO full file rewrites occur.
-   - Verify all navigation links between reports work inside a single browser tab.
-
-#### 2.2. Mode 2: Targeted Re-verification Protocol
-1. **Targeted Verification Call:**
-   - Invoke: `"Verify ID ISTG-FW-SCRT-003"`.
-2. **Behavioral Checks:**
-   - Verify the agent does **NOT** rescan the entire project.
-   - Verify the agent inspects only `include/config.h` and referenced lines.
-   - If hardcoded strings still exist, verify the agent returns `FAIL`/`PARTIAL` and does **NOT** mark `PASS`.
-
-#### 2.3. Mode 3: Closed-Loop Remediation & Re-test
-1. **Targeted Remediation Call:**
-   - Invoke: `"Remediate OWASP IDs EMB-APPSEC-01 and ISTG-FW-SCRT-003"`.
-2. **Closed-Loop Execution:**
-   - Mode 3 modifies `src/main.c` (replacing `strcpy` with bounded `snprintf`) and moves secrets from `include/config.h` to encrypted NVS storage.
-   - Mode 3 triggers Mode 2 to audit the patch.
-   - Only when Mode 2 issues `PASS` are the items moved from Section 1 (`FAIL`) to Section 3 (`PASS`) in `owasp_iot_final_report.html`, checkboxes marked as checked (`<input type="checkbox" checked>`), and logged in `owasp_iot_remediation_plan.html#tbody-resolved-history`.
+### 3.3. Mode 3 — Targeted Remediation (Surgical Patching)
+1. Triggered to fix specific IDs (e.g. *"Remediate OWASP ID EMB-APPSEC-01"*).
+2. Applies minimal, non-breaking patches strictly at mapped locations.
+3. Automatically hands off to Mode 2 to audit the patch in a closed loop until Mode 2 guarantees PASS.
 
 ---
 
@@ -127,4 +88,3 @@ tests/fixtures/mock_iot_device/
 > Per `GEMINI.md` and `local-sync-rule.md`, any future modification to rules, skills, templates, or scripts must:
 > 1. Sync automatically to `C:\Users\Admin\.gemini\config\rules\` and `C:\Users\Admin\.gemini\config\skills\`.
 > 2. Be staged, committed with semantic convention, and pushed to `origin main` on GitHub.
-
