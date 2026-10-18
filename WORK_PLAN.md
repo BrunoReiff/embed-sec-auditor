@@ -39,7 +39,7 @@ flowchart TD
 
 | Milestone | Objective | Deliverables | Status |
 | :--- | :--- | :--- | :--- |
-| **M1: Architecture Baseline & Boundary Enforcement** | Ensure strict isolation between Levels 1, 2, and 3 with zero redundancy. | Updated `owasp-iot-agent-rule.md`, `SKILL.md`, and templates with anchor tags. | **Completed** |
+| **M1: Architecture Baseline & Boundary Enforcement** | Ensure strict isolation between Levels 1, 2, and 3 with modular mode files (`mode_1_full_audit.md`, `mode_2_targeted_verification.md`, `mode_3_targeted_remediation.md`) and a lean Master Router `SKILL.md`. | Modular mode documents, Master Router `SKILL.md` (~5 KB), updated `owasp-iot-agent-rule.md`, and anchor tags. | **Completed** |
 | **M2: Synthetic Testbed & Mock Project** | Create a deterministic test suite containing deliberate vulnerabilities across all 6 modules. | `tests/fixtures/mock_iot_device/` with vulnerable C/C++, headers, configs, and OTA code. | **Next (Sprint 1)** |
 | **M3: End-to-End Functional Validation** | Verify Mode 1, Mode 2, and Mode 3 execution flows against the synthetic testbed. | Automated test run logs, validated HTML reports, and closed-loop Mode 2 $\leftrightarrow$ Mode 3 cycle. | **Sprint 2** |
 | **M4: Benchmarking & Latency Profiling** | Measure token consumption, execution latency, and template population duration. | Benchmark report confirming template population < 30s and zero formatting bugs. | **Sprint 2** |
