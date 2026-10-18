@@ -364,6 +364,8 @@ def main():
     parser.add_argument("--verify-id", default="", help="Mode 2: Specific OWASP ID for targeted re-verification (e.g., ISTG-FW-SCRT-003)")
     parser.add_argument("--init-checklist", action="store_true", help="Initializes the static HTML progress checklist in the project if it does not exist")
     parser.add_argument("--init-remediation", action="store_true", help="Initializes the static HTML remediation plan in the project if it does not exist")
+    parser.add_argument("--init-report", action="store_true", help="Initializes the static HTML final report in the project if it does not exist")
+    parser.add_argument("--init-all", action="store_true", help="Initializes all 3 static HTML tracking files in the project if they do not exist")
     args = parser.parse_args()
 
     target_dir = Path(args.target).resolve()
@@ -371,17 +373,32 @@ def main():
     report_path = target_dir / args.report
     remediation_path = target_dir / args.remediation
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+    date_str = datetime.now().strftime("%Y-%m-%d")
 
-    if args.init_checklist and not checklist_path.exists():
-        template_path = Path(__file__).resolve().parent.parent / "resources" / "checklist_template.html"
+    do_checklist = args.init_checklist or args.init_all
+    do_remediation = args.init_remediation or args.init_all
+    do_report = args.init_report or args.init_all
+
+    resources_dir = Path(__file__).resolve().parent.parent / "resources"
+
+    if do_checklist and not checklist_path.exists():
+        template_path = resources_dir / "checklist_template.html"
         if template_path.exists():
             content = template_path.read_text(encoding="utf-8")
             content = content.replace("&lt;PROJECT_NAME_OR_PATH&gt;", target_dir.name).replace("<PROJECT_NAME_OR_PATH>", target_dir.name)
             content = content.replace("&lt;YYYY-MM-DD HH:MM&gt;", now_str).replace("<YYYY-MM-DD HH:MM>", now_str)
             checklist_path.write_text(content, encoding="utf-8")
 
-    if args.init_remediation and not remediation_path.exists():
-        rem_template_path = Path(__file__).resolve().parent.parent / "resources" / "remediation_tracker_template.html"
+    if do_report and not report_path.exists():
+        report_template_path = resources_dir / "report_template.html"
+        if report_template_path.exists():
+            content = report_template_path.read_text(encoding="utf-8")
+            content = content.replace("&lt;PROJECT_NAME&gt;", target_dir.name).replace("<PROJECT_NAME>", target_dir.name)
+            content = content.replace("&lt;YYYY-MM-DD&gt;", date_str).replace("<YYYY-MM-DD>", date_str)
+            report_path.write_text(content, encoding="utf-8")
+
+    if do_remediation and not remediation_path.exists():
+        rem_template_path = resources_dir / "remediation_tracker_template.html"
         if rem_template_path.exists():
             content = rem_template_path.read_text(encoding="utf-8")
             content = content.replace("&lt;PROJECT_NAME&gt;", target_dir.name).replace("<PROJECT_NAME>", target_dir.name)

@@ -245,80 +245,11 @@
 
     <!-- 🔴 1. HIGH PRIORITY QUEUE (FAIL) -->
     <h2 id="queue-fail">🔴 1. Remediation Queue — High Priority (<code>FAIL</code> / Fully Non-Compliant)</h2>
-
-    <article class="remediation-card fail-card" id="EMB-APPSEC-01">
-      <div class="card-header">
-        <h3 class="card-title">
-          <input type="checkbox">
-          <code>&lt;OWASP_ID&gt;</code> — &lt;Topic Name&gt;
-        </h3>
-        <span class="badge badge-fail">❌ FAIL (Awaiting Remediation)</span>
-      </div>
-      <p><strong>Module (6.2) / Component:</strong> <code>&lt;Ex.: Module 1 / EMB-APPSEC-01 or ISTG-DES-INPV-001&gt;</code></p>
-      <p><strong>📍 Exact Location (File(s) &amp; Line(s)):</strong></p>
-      <ul>
-        <li><a href="file:///abs/path/src/main.c#L42-L48"><code>src/main.c:L42-L48</code></a> — Function <code>parse_uart_cmd()</code>: unbounded <code>strcpy(buf, rx_data)</code> into <code>buf[64]</code>.</li>
-        <li><a href="file:///abs/path/src/network.c#L115"><code>src/network.c:L115</code></a> — Function <code>handle_mqtt_msg()</code>: unbounded <code>sprintf(topic_buf, ...)</code>.</li>
-      </ul>
-      <p><strong>Issue Description:</strong> &lt;Objective explanation of the vulnerability found&gt;</p>
-      <p><strong>What Needs to Be Done (OWASP Acceptance Criteria):</strong> &lt;Exact replacement/fix required at each file and line listed above&gt;</p>
-
-      <div><strong>⚡ Direct Command (Mode 3 — This Agent Remediates + Self-Verifies + Marks PASS):</strong></div>
-      <div class="cmd-block">
-        <span>Remediate OWASP ID &lt;OWASP_ID&gt;</span>
-        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
-      </div>
-
-      <div><strong>📋 Ready-to-Copy Prompt for External Developer Agent (Option B — Zero Search Effort):</strong></div>
-      <div class="cmd-block">
-        <span>Fix vulnerability &lt;OWASP_ID&gt; (&lt;Topic Name&gt;) at the following exact files and lines: (1) &lt;file_path_1&gt; lines &lt;X-Y&gt; in function &lt;func_1&gt;, (2) &lt;file_path_2&gt; line &lt;Z&gt; in function &lt;func_2&gt;. Apply the following secure fix: &lt;secure_fix_description&gt;.</span>
-        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
-      </div>
-
-      <div><strong>🔍 Standalone Re-test Command (Mode 2 — If fixed externally):</strong></div>
-      <div class="cmd-block">
-        <span>Verify ID &lt;OWASP_ID&gt;</span>
-        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
-      </div>
-    </article>
+    <!-- ANCHOR: INSERT_FAIL_CARDS_HERE -->
 
     <!-- 🟡 2. MEDIUM PRIORITY QUEUE (PARTIAL) -->
     <h2 id="queue-partial">🟡 2. Remediation Queue — Medium Priority (<code>PARTIAL</code> / Partially Compliant)</h2>
-
-    <article class="remediation-card partial-card" id="ISTG-FW[UPDT]-LOGIC-001">
-      <div class="card-header">
-        <h3 class="card-title">
-          <input type="checkbox">
-          <code>&lt;OWASP_ID&gt;</code> — &lt;Topic Name&gt;
-        </h3>
-        <span class="badge badge-partial">⚠️ PARTIAL (Incomplete Mitigation)</span>
-      </div>
-      <p><strong>Module (6.2) / Component:</strong> <code>&lt;Ex.: Module 4 / FW[UPDT]&gt;</code></p>
-      <p><strong>📍 Exact Location (File(s) &amp; Line(s)):</strong></p>
-      <ul>
-        <li><a href="file:///abs/path/src/ota.c#L40-L60"><code>src/ota.c:L40-L60</code></a> — Function <code>verify_ota_header()</code></li>
-        <li><a href="file:///abs/path/sdkconfig#L112"><code>sdkconfig:L112</code></a> — Flag <code>CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK</code> disabled</li>
-      </ul>
-      <p><strong>What Already Exists vs. What is Missing:</strong> &lt;Summary of what is already implemented and what is missing to achieve 100% compliance&gt;</p>
-
-      <div><strong>⚡ Direct Command (Mode 3 — This Agent Remediates + Self-Verifies + Marks PASS):</strong></div>
-      <div class="cmd-block">
-        <span>Remediate OWASP ID &lt;OWASP_ID&gt;</span>
-        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
-      </div>
-
-      <div><strong>📋 Ready-to-Copy Prompt for External Developer Agent (Option B — Zero Search Effort):</strong></div>
-      <div class="cmd-block">
-        <span>Complete the implementation of control &lt;OWASP_ID&gt; (&lt;Topic Name&gt;) at exact file &lt;file_path&gt; (lines &lt;X-Y&gt;, function &lt;func_name&gt;): &lt;required_adjustment&gt;.</span>
-        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
-      </div>
-
-      <div><strong>🔍 Standalone Re-test Command (Mode 2 — If fixed externally):</strong></div>
-      <div class="cmd-block">
-        <span>Verify ID &lt;OWASP_ID&gt;</span>
-        <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
-      </div>
-    </article>
+    <!-- ANCHOR: INSERT_PARTIAL_CARDS_HERE -->
 
     <!-- 🟢 3. HISTORY OF RESOLVED & APPROVED ISSUES (PASS) -->
     <h2 id="history-pass">🟢 3. History of Resolved &amp; Approved Issues (<code>PASS</code>)</h2>
@@ -335,15 +266,7 @@
         </tr>
       </thead>
       <tbody id="tbody-resolved-history">
-        <tr>
-          <td><code>&lt;YYYY-MM-DD HH:MM&gt;</code></td>
-          <td><code>&lt;Ex.: ISTG-FW-SCRT-003&gt;</code></td>
-          <td>Usage of Hardcoded Secrets</td>
-          <td><code>Mode 3 (Closed-Loop Verified)</code></td>
-          <td><span class="badge badge-fail">FAIL</span></td>
-          <td><span class="badge badge-pass">PASS</span></td>
-          <td>Secrets removed from <a href="file:///abs/path/config.h"><code>config.h</code></a> and migrated to encrypted NVS.</td>
-        </tr>
+        <!-- ANCHOR: INSERT_RESOLVED_HISTORY_ROWS_HERE -->
       </tbody>
     </table>
   </main>

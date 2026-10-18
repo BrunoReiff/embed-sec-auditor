@@ -229,6 +229,167 @@ After completing the execution of Modules 1 to 6 of Section 6.2 and updating the
 
 ---
 
+#### 5.3. ⚡ Fast-Path Template Population Protocol (Zero Latency Execution — < 30 Seconds)
+
+> [!IMPORTANT]
+> **DO NOT REWRITE HTML FROM SCRATCH:** Filling out the templates MUST be the fastest part of the workflow. The templates in `resources/` already contain 100% of the CSS styling, top navigation tabs, responsive containers, and JavaScript clipboard functionality.
+> **Mandatory Rule:** Never use `write_to_file` to write all 400+ lines of HTML from scratch. Instead, initialize the files from the templates and perform single-batch insertions at the explicit `<!-- ANCHOR: ... -->` comments using `replace_file_content`.
+
+##### ⚡ 1-Step Instant Initialization:
+Initialize all 3 HTML tracking files in the project workspace with pre-populated project metadata:
+```bash
+python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target . --init-all
+```
+*(Or copy `resources/report_template.html` &rarr; `owasp_iot_final_report.html`, `resources/remediation_tracker_template.html` &rarr; `owasp_iot_remediation_plan.html`, and `resources/checklist_template.html` &rarr; `owasp_iot_progress_checklist.html`)*.
+
+##### 📍 Exact Target File, Section & Anchor Mapping:
+
+| Target File | Target Section | Target Anchor / Placeholder | Content Injected by Agent |
+| :--- | :--- | :--- | :--- |
+| **`owasp_iot_final_report.html`** | Header Meta | Replace `&lt;PROJECT_NAME&gt;`, `&lt;YYYY-MM-DD&gt;` | Project name & audit date |
+| **`owasp_iot_final_report.html`** | KPI Grid | Replace `&lt;N_FAIL&gt;`, `&lt;N_PARTIAL&gt;`, `&lt;N_PASS&gt;`, `&lt;N_NA&gt;` | Count of findings per status |
+| **`owasp_iot_final_report.html`** | **Section 1: FAIL** (`#sec-fail`) | `<!-- ANCHOR: INSERT_FAIL_ROWS_HERE -->` | Formatted `<tr>` rows for all `FAIL` items (see snippet 1) |
+| **`owasp_iot_final_report.html`** | **Section 2: PARTIAL** (`#sec-partial`) | `<!-- ANCHOR: INSERT_PARTIAL_ROWS_HERE -->` | Formatted `<tr>` rows for all `PARTIAL` items (see snippet 2) |
+| **`owasp_iot_final_report.html`** | **Section 3: PASS** (`#sec-pass`) | `<!-- ANCHOR: INSERT_PASS_ROWS_HERE -->` | Formatted `<tr>` rows for all `PASS` items (see snippet 3) |
+| **`owasp_iot_final_report.html`** | **Section 4: N/A** (`#sec-na`) | `<!-- ANCHOR: INSERT_NA_ROWS_HERE -->` | Formatted `<tr>` rows for out-of-scope items (see snippet 4) |
+| **`owasp_iot_final_report.html`** | **Section 5: Discovery** (`#sec-discovery`) | `<!-- ANCHOR: INSERT_DISCOVERY_DETAILS_HERE -->` | Discovery bullet points & Section 6.1 activation table |
+| **`owasp_iot_remediation_plan.html`** | Header & KPIs | Replace `&lt;PROJECT_NAME&gt;`, `&lt;YYYY-MM-DD HH:MM&gt;`, counts | Project metadata & counts |
+| **`owasp_iot_remediation_plan.html`** | **Queue 1: High Priority (FAIL)** | `<!-- ANCHOR: INSERT_FAIL_CARDS_HERE -->` | Actionable `<article class="remediation-card fail-card">` cards (see snippet 5) |
+| **`owasp_iot_remediation_plan.html`** | **Queue 2: Medium Priority (PARTIAL)** | `<!-- ANCHOR: INSERT_PARTIAL_CARDS_HERE -->` | Actionable `<article class="remediation-card partial-card">` cards (see snippet 6) |
+| **`owasp_iot_remediation_plan.html`** | **Section 3: Approved History** | `<!-- ANCHOR: INSERT_RESOLVED_HISTORY_ROWS_HERE -->` | Re-tested & approved rows (updated by Mode 2 upon approval) |
+| **`owasp_iot_progress_checklist.html`** | State Card Header | `<!-- ANCHOR: AUDIT_STATE_LIST -->` | Project status, where agent stopped & where to go next |
+| **`owasp_iot_progress_checklist.html`** | 86 Checklist Tables | Targeted `<td><code>PENDING</code></td>` | Replace with badge (`FAIL`/`PARTIAL`/`PASS`/`N/A`) + file/line note |
+
+##### 📋 Standardized Row & Card Formats for Batch Injection:
+
+###### Snippet 1 — `FAIL` Table Row for `owasp_iot_final_report.html`:
+```html
+<tr id="row-<OWASP_ID>">
+  <td><code><OWASP_ID></code></td>
+  <td><code>Module <N></code></td>
+  <td><code><Component></code></td>
+  <td><Checklist Topic></td>
+  <td><a href="file:///<abs_path>#L<start>-L<end>"><code><rel_path>:L<start>-L<end></code></a> (<Evidence/Function>)</td>
+  <td><Risk STRIDE/CWE></td>
+  <td>
+    <Remediation Summary><br>
+    <a class="fix-link" href="./owasp_iot_remediation_plan.html#<OWASP_ID>">🛠️ Open in Remediation Plan &rarr;</a>
+  </td>
+</tr>
+```
+
+###### Snippet 2 — `PARTIAL` Table Row for `owasp_iot_final_report.html`:
+```html
+<tr id="row-<OWASP_ID>">
+  <td><code><OWASP_ID></code></td>
+  <td><code>Module <N></code></td>
+  <td><code><Component></code></td>
+  <td><Checklist Topic></td>
+  <td><a href="file:///<abs_path>#L<start>-L<end>"><code><rel_path>:L<start>-L<end></code></a> &mdash; <What is Missing></td>
+  <td>
+    <Direct Adjustment Recommendation><br>
+    <a class="fix-link" href="./owasp_iot_remediation_plan.html#<OWASP_ID>">🛠️ Open in Remediation Plan &rarr;</a>
+  </td>
+</tr>
+```
+
+###### Snippet 3 — `PASS` Table Row for `owasp_iot_final_report.html`:
+```html
+<tr id="row-<OWASP_ID>">
+  <td><code><OWASP_ID></code></td>
+  <td><code>Module <N></code></td>
+  <td><code><Component></code></td>
+  <td><Checklist Topic></td>
+  <td><a href="file:///<abs_path>#L<start>-L<end>"><code><rel_path>:L<start>-L<end></code></a></td>
+</tr>
+```
+
+###### Snippet 4 — `N/A` Table Row for `owasp_iot_final_report.html`:
+```html
+<tr>
+  <td><code><OWASP_ID_or_Group></code></td>
+  <td><code><Component></code></td>
+  <td><Technical Justification for Non-Applicability></td>
+</tr>
+```
+
+###### Snippet 5 — `FAIL` Remediation Card for `owasp_iot_remediation_plan.html`:
+```html
+<article class="remediation-card fail-card" id="<OWASP_ID>">
+  <div class="card-header">
+    <h3 class="card-title">
+      <input type="checkbox">
+      <code><OWASP_ID></code> &mdash; <Topic Name>
+    </h3>
+    <span class="badge badge-fail">❌ FAIL (Awaiting Remediation)</span>
+  </div>
+  <p><strong>Module (6.2) / Component:</strong> <code>Module <N> / <Component></code></p>
+  <p><strong>📍 Exact Location (File(s) &amp; Line(s)):</strong></p>
+  <ul>
+    <li><a href="file:///<abs_path>#L<start>-L<end>"><code><rel_path>:L<start>-L<end></code></a> &mdash; Function <code><func_name>()</code>: <Snippet/Evidence></li>
+  </ul>
+  <p><strong>Issue Description:</strong> <Objective explanation of the vulnerability found></p>
+  <p><strong>What Needs to Be Done (OWASP Acceptance Criteria):</strong> <Exact replacement/fix required at each file and line listed above></p>
+
+  <div><strong>⚡ Direct Command (Mode 3 &mdash; This Agent Remediates + Self-Verifies + Marks PASS):</strong></div>
+  <div class="cmd-block">
+    <span>Remediate OWASP ID <OWASP_ID></span>
+    <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+  </div>
+
+  <div><strong>📋 Ready-to-Copy Prompt for External Developer Agent (Option B &mdash; Zero Search Effort):</strong></div>
+  <div class="cmd-block">
+    <span>Fix vulnerability <OWASP_ID> (<Topic Name>) at <rel_path>:L<start>-L<end> in function <func_name>(): <secure_fix_description>.</span>
+    <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+  </div>
+
+  <div><strong>🔍 Standalone Re-test Command (Mode 2 &mdash; If fixed externally):</strong></div>
+  <div class="cmd-block">
+    <span>Verify ID <OWASP_ID></span>
+    <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+  </div>
+</article>
+```
+
+###### Snippet 6 — `PARTIAL` Remediation Card for `owasp_iot_remediation_plan.html`:
+```html
+<article class="remediation-card partial-card" id="<OWASP_ID>">
+  <div class="card-header">
+    <h3 class="card-title">
+      <input type="checkbox">
+      <code><OWASP_ID></code> &mdash; <Topic Name>
+    </h3>
+    <span class="badge badge-partial">⚠️ PARTIAL (Incomplete Mitigation)</span>
+  </div>
+  <p><strong>Module (6.2) / Component:</strong> <code>Module <N> / <Component></code></p>
+  <p><strong>📍 Exact Location (File(s) &amp; Line(s)):</strong></p>
+  <ul>
+    <li><a href="file:///<abs_path>#L<start>-L<end>"><code><rel_path>:L<start>-L<end></code></a> &mdash; Function <code><func_name>()</code>: <Snippet/Evidence></li>
+  </ul>
+  <p><strong>What Already Exists vs. What is Missing:</strong> <Summary of existing control and missing gap to achieve 100% compliance></p>
+
+  <div><strong>⚡ Direct Command (Mode 3 &mdash; This Agent Remediates + Self-Verifies + Marks PASS):</strong></div>
+  <div class="cmd-block">
+    <span>Remediate OWASP ID <OWASP_ID></span>
+    <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+  </div>
+
+  <div><strong>📋 Ready-to-Copy Prompt for External Developer Agent (Option B &mdash; Zero Search Effort):</strong></div>
+  <div class="cmd-block">
+    <span>Complete the implementation of control <OWASP_ID> (<Topic Name>) at <rel_path>:L<start>-L<end>: <required_adjustment>.</span>
+    <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+  </div>
+
+  <div><strong>🔍 Standalone Re-test Command (Mode 2 &mdash; If fixed externally):</strong></div>
+  <div class="cmd-block">
+    <span>Verify ID <OWASP_ID></span>
+    <button class="copy-btn" onclick="copyCmd(this)">Copy</button>
+  </div>
+</article>
+```
+
+---
+
 ## Mode 2: Targeted Single-ID Verification / Re-test (`Targeted ID Verification Mode`)
 
 When the user (or Mode 3 itself) invokes the agent in **Mode 2** passing **one or more specific OWASP IDs** (e.g., *"Verify ID `ISTG-FW-SCRT-003`"*, *"Re-test `EMB-APPSEC-01` that I just fixed"*), the agent **MUST NOT** re-run the full audit (Steps 1 to 5) and **MUST NEVER assume that an attempted fix automatically became `PASS`**.
