@@ -232,8 +232,14 @@ After completing the execution of Modules 1 to 6 of Section 6.2 and updating the
 #### 5.3. ⚡ Fast-Path Template Population Protocol (Zero Latency Execution — < 30 Seconds)
 
 > [!IMPORTANT]
-> **DO NOT REWRITE HTML FROM SCRATCH:** Filling out the templates MUST be the fastest part of the workflow. The templates in `resources/` already contain 100% of the CSS styling, top navigation tabs, responsive containers, and JavaScript clipboard functionality.
-> **Mandatory Rule:** Never use `write_to_file` to write all 400+ lines of HTML from scratch. Instead, initialize the files from the templates and perform single-batch insertions at the explicit `<!-- ANCHOR: ... -->` comments using `replace_file_content`.
+> **IMMUTABLE HTML SKELETON & ZERO REWRITING (< 30 Seconds):**
+> The pre-built templates in `resources/` already contain 100% of the CSS styling, top navigation tabs, responsive containers, and JavaScript clipboard functionality.
+> - **Skeleton is 100% Frozen/Immutable:** The agent is **strictly prohibited** from altering or touching `<head>`, `<style>`, `<nav>`, `<section>`, table headers `<thead>`, CSS classes, or `<script>` tags.
+> - **Permitted Modifications ONLY:**
+>   1. **Anchor Injections:** Inject finding rows (`<tr>`) and cards (`<article>`) **exclusively** at the declared `<!-- ANCHOR: ... -->` comments.
+>   2. **Status Transitions & Checkbox Toggles (Modes 2 & 3):** Move rows between tables (e.g. from `#tbody-fail` / `#tbody-partial` to `#tbody-pass`) when a fix is verified, check checkboxes (`<input type="checkbox" checked>`) in `owasp_iot_remediation_plan.html`, and update status badges in `owasp_iot_progress_checklist.html`.
+>   3. **Metadata & KPI Counts:** Update numeric counter values (`id="count-..."`) and dates.
+> - **Never rewrite from scratch:** Never use `write_to_file` to generate 400+ lines of HTML. Always use `replace_file_content` targeting only the specific anchor comments.
 
 ##### ⚡ 1-Step Instant Initialization:
 Initialize all 3 HTML tracking files in the project workspace with pre-populated project metadata:

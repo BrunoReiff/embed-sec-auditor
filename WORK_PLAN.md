@@ -78,14 +78,15 @@ tests/fixtures/mock_iot_device/
 ### Phase 2: Mode-by-Mode Rigorous Validation
 
 #### 2.1. Mode 1: Full Project Audit Verification
-1. **Discovery & Classification:**
+1. **Discovery & Classification (High-Speed Tree Search):**
    - Execute `python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target tests/fixtures/mock_iot_device --init-all`.
+   - Verify single-pass recursive tree search execution (`os.scandir` with early directory pruning and size limits), achieving sub-second response time.
    - Verify that Section 6.1 correctly classifies Categories 1 (Embedded Code) and 2 (Build System).
 2. **Sequential Module Execution:**
    - Verify Modules 1 through 6 in strict sequence.
    - Confirm every detected vulnerability records exact file and line ranges (`file:///.../src/main.c#L42-L48`).
-3. **Fast-Path HTML Generation (< 30s):**
-   - Confirm the agent populates `owasp_iot_final_report.html` and `owasp_iot_remediation_plan.html` via surgical anchor replacement (`<!-- ANCHOR: ... -->`).
+3. **Fast-Path HTML Generation (< 30s) & Immutable Skeleton Enforcement:**
+   - **Strictly Immutable HTML Structure:** Confirm that the agent modifies ONLY content at the explicit anchors (`<!-- ANCHOR: ... -->`), toggles checkboxes, and updates status badges/KPI counters. Under NO circumstances may the agent alter `<head>`, `<style>`, `<nav>`, `<section>`, `<thead>`, or `<script>` tags.
    - Confirm NO full file rewrites occur.
    - Verify all navigation links between reports work inside a single browser tab.
 
@@ -103,7 +104,7 @@ tests/fixtures/mock_iot_device/
 2. **Closed-Loop Execution:**
    - Mode 3 modifies `src/main.c` (replacing `strcpy` with bounded `snprintf`) and moves secrets from `include/config.h` to encrypted NVS storage.
    - Mode 3 triggers Mode 2 to audit the patch.
-   - Only when Mode 2 issues `PASS` are the items moved from Section 1 (`FAIL`) to Section 3 (`PASS`) in `owasp_iot_final_report.html` and logged in `owasp_iot_remediation_plan.html#tbody-resolved-history`.
+   - Only when Mode 2 issues `PASS` are the items moved from Section 1 (`FAIL`) to Section 3 (`PASS`) in `owasp_iot_final_report.html`, checkboxes marked as checked (`<input type="checkbox" checked>`), and logged in `owasp_iot_remediation_plan.html#tbody-resolved-history`.
 
 ---
 
@@ -126,3 +127,4 @@ tests/fixtures/mock_iot_device/
 > Per `GEMINI.md` and `local-sync-rule.md`, any future modification to rules, skills, templates, or scripts must:
 > 1. Sync automatically to `C:\Users\Admin\.gemini\config\rules\` and `C:\Users\Admin\.gemini\config\skills\`.
 > 2. Be staged, committed with semantic convention, and pushed to `origin main` on GitHub.
+

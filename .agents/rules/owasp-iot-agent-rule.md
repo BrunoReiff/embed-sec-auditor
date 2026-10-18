@@ -17,6 +17,13 @@ description: Mandatory operational rules for the OWASP IoT & Embedded Security A
      - **State-Tracking Checklist:** `owasp_iot_progress_checklist.html` (based on [`checklist_template.html`](../skills/owasp-iot-auditor/resources/checklist_template.html))
    - Every generated HTML file MUST preserve the **unified top navigation bar** linking `./owasp_iot_final_report.html` $\leftrightarrow$ `./owasp_iot_remediation_plan.html` $\leftrightarrow$ `./owasp_iot_progress_checklist.html`, and every `FAIL`/`PARTIAL` row in `owasp_iot_final_report.html` MUST include a direct anchor link (`<a href="./owasp_iot_remediation_plan.html#<OWASP_ID>">`) jumping straight to that item's remediation card in `owasp_iot_remediation_plan.html`.
    - Only generate Markdown (`.md`) or another format if the user explicitly requests it.
+3. **🔒 Immutable HTML Skeleton & Strict Anchor Modification Rule:**
+   - **The HTML skeleton is 100% IMMUTABLE:** The agent is **strictly forbidden** from altering any HTML layout, `<head>`, `<style>`, `<nav>`, section containers (`<section id="...">`), table headers (`<thead>`), CSS classes, or JavaScript `<script>` blocks.
+   - **What the Agent May Modify (Exclusively):**
+     1. **Anchor Injections:** Insert findings rows (`<tr>`) or remediation cards (`<article>`) **exclusively** at the declared anchor comments (`<!-- ANCHOR: INSERT_..._HERE -->`).
+     2. **Status Transitions & Checkbox Toggles (Modes 2 & 3):** When a vulnerability is re-tested and verified, the agent may move the `<tr>` row between tables (e.g. from `#tbody-fail` / `#tbody-partial` to `#tbody-pass`), toggle checkboxes to checked (`<input type="checkbox" checked>`) in `owasp_iot_remediation_plan.html`, append approved entries to `#tbody-resolved-history`, and update status badges in `owasp_iot_progress_checklist.html`.
+     3. **Metadata & KPI Counts:** Update count numbers (`id="count-fail"`, etc.) and date strings.
+   - **Zero structural HTML alterations are permitted.**
 
 ---
 

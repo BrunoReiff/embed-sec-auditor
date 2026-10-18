@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-OWASP IoT & Embedded Security Auditor — Helper Scanner Script
+OWASP IoT & Embedded Security Auditor — High-Performance Helper Scanner Script
+Architecture: Single-Pass Recursive Tree Search with os.scandir
 Executes:
-1. General Project Discovery of Artifacts and Technologies
-2. Software Functionalities Classification per Section 6.1 (Step 2 of SKILL.md)
-3. State-Tracking Checklist Inspection/Initialization (static HTML by default)
-4. Automated Static Triage following strict Section 6.2 order (Modules 1 to 6)
+1. Instant Template Initialization (--init-all, --init-checklist, --init-report, --init-remediation)
+2. Single-Pass Tree Search: Concurrent Technology Discovery (Step 1) and Static Triage (Step 4)
+3. Functionality Classification per Section 6.1 (Step 2 of SKILL.md)
+4. State-Tracking Checklist Inspection and Targeted ID Locator for Mode 2 (--verify-id)
 """
 
 import argparse
@@ -37,9 +38,16 @@ SOURCE_EXTS = {
     ".json", ".yaml", ".yml", ".ini", ".conf", ".cfg", ".cmake", ".mk"
 }
 
+MAX_FILE_SIZE_BYTES = 500 * 1024  # 500 KB limit to prevent reading large dumps/binaries
 
-def scan_project_artifacts(target_dir: Path):
-    """Step 1: General project discovery and detection of artifacts and technologies."""
+
+def scan_project_tree(target_dir: Path):
+    """
+    High-Performance Single-Pass Tree Search Algorithm using os.scandir:
+    - Prunes ignored directories at tree branch level immediately (no descent).
+    - Ignores files > 500 KB to avoid slow I/O or binary parsing.
+    - Executes discovery (inventory) AND static check triage concurrently in ONE pass.
+    """
     inventory = {
         "files_by_ext": {},
         "total_files_scanned": 0,
@@ -59,129 +67,194 @@ def scan_project_artifacts(target_dir: Path):
         "gitignore_content": "",
     }
 
-    for root, dirs, files in os.walk(target_dir):
-        dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
-        rel_root = Path(root).relative_to(target_dir)
+    findings = {
+        "Module_1_SAST_and_Memory": [],
+        "Module_2_Secrets_Identity_Cryptography": [],
+        "Module_3_Hardening_Build_Bootloader_Binaries": [],
+        "Module_4_Firmware_Update_OTA": [],
+        "Module_5_Data_Exchange_Services_Logic": [],
+        "Module_6_SBOM_and_Dependencies": [],
+    }
 
-        for fname in files:
-            fpath = Path(root) / fname
-            rel_path = str(rel_root / fname) if str(rel_root) != "." else fname
-            ext = fpath.suffix.lower()
+    rules = [
+        # Module 1
+        ("Module_1_SAST_and_Memory", "ISTG-*-INPV-001 / EMB-APPSEC-01", "Unsafe C/C++ buffer manipulation function", re.compile(r"\b(gets|strcpy|strcat|sprintf|vsprintf)\s*\("), {".c", ".cpp", ".cc", ".h", ".hpp", ".ino"}),
+        ("Module_1_SAST_and_Memory", "EMB-APPSEC-01", "Potential misuse of strncpy/strncat bounded by strlen", re.compile(r"\b(strncpy|strncat)\s*\([^;]*strlen\s*\("), {".c", ".cpp", ".cc", ".h", ".hpp", ".ino"}),
+        ("Module_1_SAST_and_Memory", "ISTG-*-INPV-002 / EMB-APPSEC-02", "External command/process execution (Command Injection risk)", re.compile(r"\b(system|popen|execlp|execvp|os\.system|child_process\.exec|eval)\s*\("), {".c", ".cpp", ".py", ".js", ".ts", ".lua", ".php"}),
+        # Module 2
+        ("Module_2_Secrets_Identity_Cryptography", "ISTG-FW-SCRT-003 / EMB-APPSEC-04", "Potential hardcoded secret/credential", re.compile(r"(?:WIFI_PASS|MQTT_PASS|PASSWORD|SECRET|API_KEY|PRIVATE_KEY)\s*[:=]\s*[\"'][^\"']{3,}[\"']|-----BEGIN (?:RSA )?PRIVATE KEY-----", re.I), SOURCE_EXTS),
+        ("Module_2_Secrets_Identity_Cryptography", "ISTG-*-CRYPT-001 / EMB-APPSEC-08", "TLS certificate validation disabled", re.compile(r"\b(setInsecure\s*\(\)|MBEDTLS_SSL_VERIFY_NONE|rejectUnauthorized\s*:\s*false|CURLOPT_SSL_VERIFYPEER\s*,\s*0)\b"), SOURCE_EXTS),
+        ("Module_2_Secrets_Identity_Cryptography", "ISTG-*-CRYPT-001", "Weak cryptographic algorithm or hash usage (MD5/SHA1/DES/RC4/ECB)", re.compile(r"\b(MD5|SHA1|DES|3DES|RC4|AES_ECB|ECB_MODE)\b"), SOURCE_EXTS),
+        # Module 3
+        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-INT[UART]-INFO-002", "Serial log detected (verify if it leaks secrets/UIDs/tokens over UART)", re.compile(r"\b(Serial\.print|Serial\.println|Serial\.printf|ESP_LOG[IWDVE])\s*\([^)]*(?:pass|key|token|secret|uid|hash|pin)", re.I), {".c", ".cpp", ".h", ".hpp", ".ino"}),
+        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-FW-INFO-004 / EMB-APPSEC-06", "Compiler hardening or Secure Boot/Flash Encryption flag present", re.compile(r"(-fstack-protector|-fPIE|-D_FORTIFY_SOURCE|CONFIG_SECURE_BOOT|CONFIG_SECURE_FLASH_ENC|CONFIG_ENABLE_VBOOT|CONFIG_FIT_SIGNATURE)"), {".txt", ".ini", ".mk", ".cmake", ""}),
+        # Module 4
+        ("Module_4_Firmware_Update_OTA", "ISTG-FW[UPDT]-*", "Firmware update (OTA) routine or configuration detected", re.compile(r"\b(esp_https_ota|esp_ota_begin|ArduinoOTA|HTTPUpdate|Update\.begin|CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK)\b"), SOURCE_EXTS),
+        # Module 5
+        ("Module_5_Data_Exchange_Services_Logic", "ISTG-DES-AUTHZ-001", "Anonymous broker access or wildcard MQTT topic subscription", re.compile(r"\b(allow_anonymous\s+true)\b|subscribe\s*\(\s*[\"']#[\"']"), SOURCE_EXTS),
+    ]
 
-            if fname == "metodologia_owasp_iot_agente.md" or fname.startswith("owasp_iot_"):
-                continue
+    def _traverse(current_dir: Path):
+        try:
+            with os.scandir(current_dir) as entries:
+                for entry in entries:
+                    name = entry.name
+                    # 1. Early Directory Pruning
+                    if entry.is_dir(follow_symlinks=False):
+                        if name in IGNORE_DIRS or name.startswith("."):
+                            continue
+                        _traverse(Path(entry.path))
+                        continue
 
-            inventory["total_files_scanned"] += 1
-            inventory["files_by_ext"][ext] = inventory["files_by_ext"].get(ext, 0) + 1
+                    # 2. Skip generated report files
+                    if name.startswith("owasp_iot_") or name == "metodologia_owasp_iot_agente.md":
+                        continue
 
-            if fname == ".gitignore":
-                inventory["has_gitignore"] = True
-                try:
-                    inventory["gitignore_content"] = fpath.read_text(encoding="utf-8", errors="ignore")
-                except Exception:
-                    pass
+                    rel_path = str(Path(entry.path).relative_to(target_dir))
+                    ext = Path(entry.path).suffix.lower()
+                    lower_name = name.lower()
 
-            lower_name = fname.lower()
-            # Build & Firmware images
-            if (
-                lower_name in {"cmakelists.txt", "makefile", "platformio.ini", "sdkconfig", "sdkconfig.defaults", "kconfig", "dockerfile", "docker-compose.yml", "idf_component.yml"}
-                or ext in {".bin", ".elf", ".hex", ".uf2", ".img", ".squashfs", ".jffs2", ".ubifs", ".ld"}
-                or lower_name.endswith(".bb") or lower_name.endswith(".bbappend")
-            ):
-                inventory["build_and_firmware_files"].append(rel_path)
-                if "platformio.ini" in lower_name:
-                    inventory["detected_technologies"]["build_systems"].add("PlatformIO")
-                if "sdkconfig" in lower_name or "idf_component" in lower_name:
-                    inventory["detected_technologies"]["rtos_os_sdk"].add("ESP-IDF")
-                if "cmakelists.txt" in lower_name:
-                    inventory["detected_technologies"]["build_systems"].add("CMake")
-                if "makefile" in lower_name:
-                    inventory["detected_technologies"]["build_systems"].add("Make")
-                if "dockerfile" in lower_name or "docker-compose" in lower_name:
-                    inventory["detected_technologies"]["build_systems"].add("Docker")
-                if lower_name.endswith((".bb", ".bbappend")):
-                    inventory["detected_technologies"]["rtos_os_sdk"].add("Yocto / OpenEmbedded")
+                    inventory["total_files_scanned"] += 1
+                    inventory["files_by_ext"][ext] = inventory["files_by_ext"].get(ext, 0) + 1
 
-            # Embedded code files
-            if ext in {".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".ino", ".s", ".S"}:
-                inventory["embedded_code_files"].append(rel_path)
-                if ext == ".ino":
-                    inventory["detected_technologies"]["rtos_os_sdk"].add("Arduino")
+                    if name == ".gitignore":
+                        inventory["has_gitignore"] = True
+                        try:
+                            inventory["gitignore_content"] = Path(entry.path).read_text(encoding="utf-8", errors="ignore")
+                        except Exception:
+                            pass
 
-            # Backend / Services
-            if lower_name in {"package.json", "requirements.txt", "pyproject.toml", "mosquitto.conf"} or ext in {".py", ".js", ".ts", ".go", ".rs"}:
-                if not any(p in rel_path.lower() for p in ["frontend", "public", "www", "htdocs", "ui", "web"]):
-                    inventory["backend_service_files"].append(rel_path)
+                    # 3. Categorize build & firmware artifacts
+                    if (
+                        lower_name in {"cmakelists.txt", "makefile", "platformio.ini", "sdkconfig", "sdkconfig.defaults", "kconfig", "dockerfile", "docker-compose.yml", "idf_component.yml"}
+                        or ext in {".bin", ".elf", ".hex", ".uf2", ".img", ".squashfs", ".jffs2", ".ubifs", ".ld"}
+                        or lower_name.endswith((".bb", ".bbappend"))
+                    ):
+                        inventory["build_and_firmware_files"].append(rel_path)
+                        if "platformio.ini" in lower_name:
+                            inventory["detected_technologies"]["build_systems"].add("PlatformIO")
+                        if "sdkconfig" in lower_name or "idf_component" in lower_name:
+                            inventory["detected_technologies"]["rtos_os_sdk"].add("ESP-IDF")
+                        if "cmakelists.txt" in lower_name:
+                            inventory["detected_technologies"]["build_systems"].add("CMake")
+                        if "makefile" in lower_name:
+                            inventory["detected_technologies"]["build_systems"].add("Make")
+                        if "dockerfile" in lower_name or "docker-compose" in lower_name:
+                            inventory["detected_technologies"]["build_systems"].add("Docker")
+                        if lower_name.endswith((".bb", ".bbappend")):
+                            inventory["detected_technologies"]["rtos_os_sdk"].add("Yocto / OpenEmbedded")
 
-            # UI / Frontend
-            if ext in {".html", ".htm", ".css", ".vue", ".jsx", ".tsx"} or any(p in rel_path.lower() for p in ["frontend", "www", "htdocs", "webui", "dashboard"]):
-                inventory["ui_frontend_files"].append(rel_path)
+                    # 4. Embedded code files
+                    if ext in {".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".ino", ".s", ".S"}:
+                        inventory["embedded_code_files"].append(rel_path)
+                        if ext == ".ino":
+                            inventory["detected_technologies"]["rtos_os_sdk"].add("Arduino")
 
-            # Content inspection for tech stack detection
-            if ext in SOURCE_EXTS or lower_name in {"sdkconfig", "platformio.ini", "cmakelists.txt", "package.json"}:
-                try:
-                    content = fpath.read_text(encoding="utf-8", errors="ignore")
-                except Exception:
-                    continue
+                    # 5. Backend / Services
+                    if lower_name in {"package.json", "requirements.txt", "pyproject.toml", "mosquitto.conf"} or ext in {".py", ".js", ".ts", ".go", ".rs"}:
+                        if not any(p in rel_path.lower() for p in ["frontend", "public", "www", "htdocs", "ui", "web"]):
+                            inventory["backend_service_files"].append(rel_path)
 
-                # RTOS / OS
-                if re.search(r"\b(freertos|xTaskCreate|vTaskDelay|configCHECK_FOR_STACK_OVERFLOW)\b", content, re.I):
-                    inventory["detected_technologies"]["rtos_os_sdk"].add("FreeRTOS")
-                if re.search(r"\b(esp_system\.h|esp_wifi\.h|esp_log\.h|nvs_flash\.h|esp_ota_ops\.h)\b", content, re.I):
-                    inventory["detected_technologies"]["rtos_os_sdk"].add("ESP-IDF")
-                if re.search(r"\b(Arduino\.h|Serial\.begin|digitalWrite|WiFi\.begin)\b", content):
-                    inventory["detected_technologies"]["rtos_os_sdk"].add("Arduino Framework")
-                if re.search(r"\b(zephyr/kernel\.h|CONFIG_ZEPHYR)\b", content, re.I):
-                    inventory["detected_technologies"]["rtos_os_sdk"].add("Zephyr RTOS")
-                if re.search(r"\b(CONFIG_ENABLE_VBOOT|CONFIG_FIT_SIGNATURE|CONFIG_BOOTDELAY|u-boot)\b", content, re.I):
-                    inventory["detected_technologies"]["rtos_os_sdk"].add("Das U-Boot")
+                    # 6. UI / Frontend
+                    if ext in {".html", ".htm", ".css", ".vue", ".jsx", ".tsx"} or any(p in rel_path.lower() for p in ["frontend", "www", "htdocs", "webui", "dashboard"]):
+                        inventory["ui_frontend_files"].append(rel_path)
 
-                # Crypto libraries
-                if re.search(r"\b(mbedtls_|mbedtls/)\b", content, re.I):
-                    inventory["detected_technologies"]["crypto_libs"].add("mbedTLS")
-                if re.search(r"\b(openssl/|SSL_CTX_|EVP_PKEY|X509_verify_cert)\b", content):
-                    inventory["detected_technologies"]["crypto_libs"].add("OpenSSL")
-                if re.search(r"\b(wolfssl|wc_InitRsaKey)\b", content, re.I):
-                    inventory["detected_technologies"]["crypto_libs"].add("wolfSSL")
-                if re.search(r"\b(bcrypt|argon2|pbkdf2)\b", content, re.I):
-                    inventory["detected_technologies"]["crypto_libs"].add("Password Hashing (bcrypt/PBKDF2/Argon2)")
+                    # 7. Check for SBOM manifests
+                    if lower_name in {"package.json", "requirements.txt", "platformio.ini", "idf_component.yml"}:
+                        findings["Module_6_SBOM_and_Dependencies"].append({
+                            "id": "ISTG-*-CONF-001 / EMB-APPSEC-10",
+                            "file": rel_path,
+                            "line": 1,
+                            "description": f"Dependency manifest detected ({name}) for SBOM generation and CVE audit.",
+                        })
 
-                # Protocols & Data Exchange Services
-                if re.search(r"\b(mqtt|mosquitto|aedes|PubSubClient|esp_mqtt_client)\b", content, re.I):
-                    inventory["detected_technologies"]["protocols_services"].add("MQTT")
-                if re.search(r"\b(coap)\b", content, re.I):
-                    inventory["detected_technologies"]["protocols_services"].add("CoAP")
-                if re.search(r"\b(http|https|express|fastapi|flask|esp_http_client|WebServer)\b", content, re.I):
-                    inventory["detected_technologies"]["protocols_services"].add("HTTP/REST")
-                if re.search(r"\b(websocket|ws://|wss://|socket\.io)\b", content, re.I):
-                    inventory["detected_technologies"]["protocols_services"].add("WebSockets")
+                    # 8. Single-Pass File Inspection (Max size guard)
+                    if ext not in SOURCE_EXTS and lower_name not in {"sdkconfig", "cmakelists.txt", "makefile", "platformio.ini"}:
+                        continue
 
-                # Hardware & Wireless Interfaces
-                if re.search(r"\b(Serial\.print|uart_driver_install|ttyS|ttyAMA|UART_NUM_)\b", content):
-                    inventory["detected_technologies"]["hardware_interfaces"].add("UART")
-                if re.search(r"\b(Wire\.begin|i2c_master_|i2c_param_config|/dev/i2c)\b", content):
-                    inventory["detected_technologies"]["hardware_interfaces"].add("I2C")
-                if re.search(r"\b(SPI\.begin|spi_bus_initialize|MFRC522|RC522)\b", content):
-                    inventory["detected_technologies"]["hardware_interfaces"].add("SPI")
-                if re.search(r"\b(MFRC522|RC522|PN532|rfid|nfc)\b", content, re.I):
-                    inventory["detected_technologies"]["hardware_interfaces"].add("RFID/NFC (WRLS)")
-                if re.search(r"\b(WiFi\.|esp_wifi|wpa_supplicant)\b", content):
-                    inventory["detected_technologies"]["hardware_interfaces"].add("Wi-Fi (WRLS)")
-                if re.search(r"\b(BLEDevice|esp_ble_|NimBLE|bluetooth)\b", content, re.I):
-                    inventory["detected_technologies"]["hardware_interfaces"].add("BLE/Bluetooth (WRLS)")
-                if re.search(r"\b(jtag|swd|openocd)\b", content, re.I):
-                    inventory["detected_technologies"]["hardware_interfaces"].add("JTAG/SWD")
+                    try:
+                        st = entry.stat()
+                        if st.st_size > MAX_FILE_SIZE_BYTES or st.st_size == 0:
+                            continue
+                    except Exception:
+                        continue
 
-                # Storage / Filesystems
-                if re.search(r"\b(LittleFS|SPIFFS|nvs_flash|EEPROM|squashfs|ubifs|jffs2|sqlite)\b", content, re.I):
-                    for m in set(re.findall(r"\b(LittleFS|SPIFFS|nvs_flash|EEPROM|squashfs|ubifs|jffs2|sqlite)\b", content, re.I)):
-                        inventory["detected_technologies"]["storage_filesystems"].add(m)
+                    try:
+                        content = Path(entry.path).read_text(encoding="utf-8", errors="ignore")
+                    except Exception:
+                        continue
 
-    # Convert sets to sorted lists for JSON serialization
+                    # Technology detections from content
+                    if re.search(r"\b(freertos|xTaskCreate|vTaskDelay|configCHECK_FOR_STACK_OVERFLOW)\b", content, re.I):
+                        inventory["detected_technologies"]["rtos_os_sdk"].add("FreeRTOS")
+                    if re.search(r"\b(esp_system\.h|esp_wifi\.h|esp_log\.h|nvs_flash\.h|esp_ota_ops\.h)\b", content, re.I):
+                        inventory["detected_technologies"]["rtos_os_sdk"].add("ESP-IDF")
+                    if re.search(r"\b(Arduino\.h|Serial\.begin|digitalWrite|WiFi\.begin)\b", content):
+                        inventory["detected_technologies"]["rtos_os_sdk"].add("Arduino Framework")
+                    if re.search(r"\b(zephyr/kernel\.h|CONFIG_ZEPHYR)\b", content, re.I):
+                        inventory["detected_technologies"]["rtos_os_sdk"].add("Zephyr RTOS")
+                    if re.search(r"\b(CONFIG_ENABLE_VBOOT|CONFIG_FIT_SIGNATURE|CONFIG_BOOTDELAY|u-boot)\b", content, re.I):
+                        inventory["detected_technologies"]["rtos_os_sdk"].add("Das U-Boot")
+
+                    if re.search(r"\b(mbedtls_|mbedtls/)\b", content, re.I):
+                        inventory["detected_technologies"]["crypto_libs"].add("mbedTLS")
+                    if re.search(r"\b(openssl/|SSL_CTX_|EVP_PKEY|X509_verify_cert)\b", content):
+                        inventory["detected_technologies"]["crypto_libs"].add("OpenSSL")
+                    if re.search(r"\b(wolfssl|wc_InitRsaKey)\b", content, re.I):
+                        inventory["detected_technologies"]["crypto_libs"].add("wolfSSL")
+                    if re.search(r"\b(bcrypt|argon2|pbkdf2)\b", content, re.I):
+                        inventory["detected_technologies"]["crypto_libs"].add("Password Hashing (bcrypt/PBKDF2/Argon2)")
+
+                    if re.search(r"\b(mqtt|mosquitto|aedes|PubSubClient|esp_mqtt_client)\b", content, re.I):
+                        inventory["detected_technologies"]["protocols_services"].add("MQTT")
+                    if re.search(r"\b(coap)\b", content, re.I):
+                        inventory["detected_technologies"]["protocols_services"].add("CoAP")
+                    if re.search(r"\b(http|https|express|fastapi|flask|esp_http_client|WebServer)\b", content, re.I):
+                        inventory["detected_technologies"]["protocols_services"].add("HTTP/REST")
+                    if re.search(r"\b(websocket|ws://|wss://|socket\.io)\b", content, re.I):
+                        inventory["detected_technologies"]["protocols_services"].add("WebSockets")
+
+                    if re.search(r"\b(Serial\.print|uart_driver_install|ttyS|ttyAMA|UART_NUM_)\b", content):
+                        inventory["detected_technologies"]["hardware_interfaces"].add("UART")
+                    if re.search(r"\b(Wire\.begin|i2c_master_|i2c_param_config|/dev/i2c)\b", content):
+                        inventory["detected_technologies"]["hardware_interfaces"].add("I2C")
+                    if re.search(r"\b(SPI\.begin|spi_bus_initialize|MFRC522|RC522)\b", content):
+                        inventory["detected_technologies"]["hardware_interfaces"].add("SPI")
+                    if re.search(r"\b(MFRC522|RC522|PN532|rfid|nfc)\b", content, re.I):
+                        inventory["detected_technologies"]["hardware_interfaces"].add("RFID/NFC (WRLS)")
+                    if re.search(r"\b(WiFi\.|esp_wifi|wpa_supplicant)\b", content):
+                        inventory["detected_technologies"]["hardware_interfaces"].add("Wi-Fi (WRLS)")
+                    if re.search(r"\b(BLEDevice|esp_ble_|NimBLE|bluetooth)\b", content, re.I):
+                        inventory["detected_technologies"]["hardware_interfaces"].add("BLE/Bluetooth (WRLS)")
+                    if re.search(r"\b(jtag|swd|openocd)\b", content, re.I):
+                        inventory["detected_technologies"]["hardware_interfaces"].add("JTAG/SWD")
+
+                    if re.search(r"\b(LittleFS|SPIFFS|nvs_flash|EEPROM|squashfs|ubifs|jffs2|sqlite)\b", content, re.I):
+                        for m in set(re.findall(r"\b(LittleFS|SPIFFS|nvs_flash|EEPROM|squashfs|ubifs|jffs2|sqlite)\b", content, re.I)):
+                            inventory["detected_technologies"]["storage_filesystems"].add(m)
+
+                    # Static triage rules execution (only if file contains matches)
+                    lines = content.splitlines()
+                    for idx, line in enumerate(lines, start=1):
+                        for mod_key, ref_id, desc, pattern, allowed_exts in rules:
+                            if ext in allowed_exts or lower_name in {"sdkconfig", "cmakelists.txt", "makefile", "platformio.ini"}:
+                                if pattern.search(line):
+                                    findings[mod_key].append({
+                                        "id": ref_id,
+                                        "file": rel_path,
+                                        "line": idx,
+                                        "description": desc,
+                                        "snippet": line.strip()[:140],
+                                    })
+        except PermissionError:
+            pass
+
+    _traverse(target_dir)
+
     for k in inventory["detected_technologies"]:
         inventory["detected_technologies"][k] = sorted(list(inventory["detected_technologies"][k]))
 
-    return inventory
+    return inventory, findings
 
 
 def classify_section_6_1(inventory):
@@ -248,14 +321,12 @@ def check_checklist_progress(checklist_path: Path):
 
     content = checklist_path.read_text(encoding="utf-8", errors="ignore")
 
-    # Match HTML table rows first (<tr><td><code>ID</code></td><td>Name</td><td>Module X</td>...<td><code>STATUS</code></td>)
     rows = re.findall(
         r"<tr>\s*<td><code>((?:ISTG|EMB-APPSEC|FSTM-STAGE)-[A-Z0-9\[\]\-]+)</code></td>\s*<td>([^<]+)</td>\s*<td>(Modules? [^<]+)</td>\s*(?:<td>[^<]*</td>\s*)?<td>(?:<span[^>]*>|<code>)?(PASS|PARTIAL|FAIL|N/A|PENDING|OPTIONAL)(?:</span>|</code>)?</td>",
         content,
         re.I,
     )
 
-    # Fallback to Markdown rows if a .md checklist is used
     if not rows:
         rows = re.findall(
             r"^\|\s*`?((?:ISTG|EMB-APPSEC|FSTM-STAGE)-[A-Z0-9\[\]\-]+)`?\s*\|\s*([^|]+)\|\s*(Modules? [^|]+)\|\s*(?:[^|]+\|\s*)?`?(PASS|PARTIAL|FAIL|N/A|PENDING|OPTIONAL)`?\s*\|",
@@ -284,79 +355,8 @@ def check_checklist_progress(checklist_path: Path):
     }
 
 
-def run_section_6_2_checks(target_dir: Path):
-    """Step 4: Executes static checks following the strict order of the 6 modules of Section 6.2."""
-    findings = {
-        "Module_1_SAST_and_Memory": [],
-        "Module_2_Secrets_Identity_Cryptography": [],
-        "Module_3_Hardening_Build_Bootloader_Binaries": [],
-        "Module_4_Firmware_Update_OTA": [],
-        "Module_5_Data_Exchange_Services_Logic": [],
-        "Module_6_SBOM_and_Dependencies": [],
-    }
-
-    rules = [
-        # Module 1
-        ("Module_1_SAST_and_Memory", "ISTG-*-INPV-001 / EMB-APPSEC-01", "Unsafe C/C++ buffer manipulation function", re.compile(r"\b(gets|strcpy|strcat|sprintf|vsprintf)\s*\("), {".c", ".cpp", ".cc", ".h", ".hpp", ".ino"}),
-        ("Module_1_SAST_and_Memory", "EMB-APPSEC-01", "Potential misuse of strncpy/strncat bounded by strlen", re.compile(r"\b(strncpy|strncat)\s*\([^;]*strlen\s*\("), {".c", ".cpp", ".cc", ".h", ".hpp", ".ino"}),
-        ("Module_1_SAST_and_Memory", "ISTG-*-INPV-002 / EMB-APPSEC-02", "External command/process execution (Command Injection risk)", re.compile(r"\b(system|popen|execlp|execvp|os\.system|child_process\.exec|eval)\s*\("), {".c", ".cpp", ".py", ".js", ".ts", ".lua", ".php"}),
-        # Module 2
-        ("Module_2_Secrets_Identity_Cryptography", "ISTG-FW-SCRT-003 / EMB-APPSEC-04", "Potential hardcoded secret/credential", re.compile(r"(?:WIFI_PASS|MQTT_PASS|PASSWORD|SECRET|API_KEY|PRIVATE_KEY)\s*[:=]\s*[\"'][^\"']{3,}[\"']|-----BEGIN (?:RSA )?PRIVATE KEY-----", re.I), SOURCE_EXTS),
-        ("Module_2_Secrets_Identity_Cryptography", "ISTG-*-CRYPT-001 / EMB-APPSEC-08", "TLS certificate validation disabled", re.compile(r"\b(setInsecure\s*\(\)|MBEDTLS_SSL_VERIFY_NONE|rejectUnauthorized\s*:\s*false|CURLOPT_SSL_VERIFYPEER\s*,\s*0)\b"), SOURCE_EXTS),
-        ("Module_2_Secrets_Identity_Cryptography", "ISTG-*-CRYPT-001", "Weak cryptographic algorithm or hash usage (MD5/SHA1/DES/RC4/ECB)", re.compile(r"\b(MD5|SHA1|DES|3DES|RC4|AES_ECB|ECB_MODE)\b"), SOURCE_EXTS),
-        # Module 3
-        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-INT[UART]-INFO-002", "Serial log detected (verify if it leaks secrets/UIDs/tokens over UART)", re.compile(r"\b(Serial\.print|Serial\.println|Serial\.printf|ESP_LOG[IWDVE])\s*\([^)]*(?:pass|key|token|secret|uid|hash|pin)", re.I), {".c", ".cpp", ".h", ".hpp", ".ino"}),
-        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-FW-INFO-004 / EMB-APPSEC-06", "Compiler hardening or Secure Boot/Flash Encryption flag present", re.compile(r"(-fstack-protector|-fPIE|-D_FORTIFY_SOURCE|CONFIG_SECURE_BOOT|CONFIG_SECURE_FLASH_ENC|CONFIG_ENABLE_VBOOT|CONFIG_FIT_SIGNATURE)"), {".txt", ".ini", ".mk", ".cmake", ""}),
-        # Module 4
-        ("Module_4_Firmware_Update_OTA", "ISTG-FW[UPDT]-*", "Firmware update (OTA) routine or configuration detected", re.compile(r"\b(esp_https_ota|esp_ota_begin|ArduinoOTA|HTTPUpdate|Update\.begin|CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK)\b"), SOURCE_EXTS),
-        # Module 5
-        ("Module_5_Data_Exchange_Services_Logic", "ISTG-DES-AUTHZ-001", "Anonymous broker access or wildcard MQTT topic subscription", re.compile(r"\b(allow_anonymous\s+true)\b|subscribe\s*\(\s*[\"']#[\"']"), SOURCE_EXTS),
-    ]
-
-    for root, dirs, files in os.walk(target_dir):
-        dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
-        rel_root = Path(root).relative_to(target_dir)
-
-        for fname in files:
-            if fname == "metodologia_owasp_iot_agente.md" or fname.startswith("owasp_iot_"):
-                continue
-            fpath = Path(root) / fname
-            rel_path = str(rel_root / fname) if str(rel_root) != "." else fname
-            ext = fpath.suffix.lower()
-
-            if fname in {"package.json", "requirements.txt", "platformio.ini", "idf_component.yml"}:
-                findings["Module_6_SBOM_and_Dependencies"].append({
-                    "id": "ISTG-*-CONF-001 / EMB-APPSEC-10",
-                    "file": rel_path,
-                    "line": 1,
-                    "description": f"Dependency manifest detected ({fname}) for SBOM generation and CVE audit.",
-                })
-
-            if ext not in SOURCE_EXTS and fname.lower() not in {"sdkconfig", "cmakelists.txt", "makefile", "platformio.ini"}:
-                continue
-
-            try:
-                lines = fpath.read_text(encoding="utf-8", errors="ignore").splitlines()
-            except Exception:
-                continue
-
-            for idx, line in enumerate(lines, start=1):
-                for mod_key, ref_id, desc, pattern, allowed_exts in rules:
-                    if ext in allowed_exts or fname.lower() in {"sdkconfig", "cmakelists.txt", "makefile", "platformio.ini"}:
-                        if pattern.search(line):
-                            findings[mod_key].append({
-                                "id": ref_id,
-                                "file": rel_path,
-                                "line": idx,
-                                "description": desc,
-                                "snippet": line.strip()[:140],
-                            })
-
-    return findings
-
-
 def main():
-    parser = argparse.ArgumentParser(description="OWASP IoT & Embedded Security Auditor Helper")
+    parser = argparse.ArgumentParser(description="OWASP IoT & Embedded Security Auditor High-Performance Helper")
     parser.add_argument("--target", default=".", help="Root directory of the embedded/IoT project to scan")
     parser.add_argument("--checklist", default="owasp_iot_progress_checklist.html", help="Path to the progress checklist file (default: static HTML)")
     parser.add_argument("--report", default="owasp_iot_final_report.html", help="Path to the final report file (default: static HTML)")
@@ -381,6 +381,8 @@ def main():
 
     resources_dir = Path(__file__).resolve().parent.parent / "resources"
 
+    # Fast-Path: Instant initialization without tree traversal if only init was requested
+    initialized_files = []
     if do_checklist and not checklist_path.exists():
         template_path = resources_dir / "checklist_template.html"
         if template_path.exists():
@@ -388,6 +390,7 @@ def main():
             content = content.replace("&lt;PROJECT_NAME_OR_PATH&gt;", target_dir.name).replace("<PROJECT_NAME_OR_PATH>", target_dir.name)
             content = content.replace("&lt;YYYY-MM-DD HH:MM&gt;", now_str).replace("<YYYY-MM-DD HH:MM>", now_str)
             checklist_path.write_text(content, encoding="utf-8")
+            initialized_files.append(str(checklist_path))
 
     if do_report and not report_path.exists():
         report_template_path = resources_dir / "report_template.html"
@@ -396,6 +399,7 @@ def main():
             content = content.replace("&lt;PROJECT_NAME&gt;", target_dir.name).replace("<PROJECT_NAME>", target_dir.name)
             content = content.replace("&lt;YYYY-MM-DD&gt;", date_str).replace("<YYYY-MM-DD>", date_str)
             report_path.write_text(content, encoding="utf-8")
+            initialized_files.append(str(report_path))
 
     if do_remediation and not remediation_path.exists():
         rem_template_path = resources_dir / "remediation_tracker_template.html"
@@ -404,7 +408,9 @@ def main():
             content = content.replace("&lt;PROJECT_NAME&gt;", target_dir.name).replace("<PROJECT_NAME>", target_dir.name)
             content = content.replace("&lt;YYYY-MM-DD HH:MM&gt;", now_str).replace("<YYYY-MM-DD HH:MM>", now_str)
             remediation_path.write_text(content, encoding="utf-8")
+            initialized_files.append(str(remediation_path))
 
+    # Mode 2 Fast-Path: Specific OWASP ID Targeted Re-verification
     if args.verify_id.strip():
         vid = args.verify_id.strip()
         def find_matches(fpath: Path):
@@ -419,20 +425,21 @@ def main():
             "remediation_plan_records": find_matches(remediation_path),
             "final_report_records": find_matches(report_path),
             "checklist_records": find_matches(checklist_path),
-            "agent_instruction": f"Surgically inspect the files referenced for {vid}, issue the verdict (PASS/PARTIAL/FAIL), and synchronize owasp_iot_remediation_plan.html, owasp_iot_final_report.html, and owasp_iot_progress_checklist.html."
+            "agent_instruction": f"Surgically inspect the files referenced for {vid}, issue the verdict (PASS/PARTIAL/FAIL), and update the anchor rows and checkboxes without altering HTML skeleton."
         }, indent=2, ensure_ascii=False))
         return
 
-    inventory = scan_project_artifacts(target_dir)
+    # Single-Pass Tree Search: Discovery + Section 6.2 Triage in ONE traversal
+    inventory, checks_6_2 = scan_project_tree(target_dir)
     classification = classify_section_6_1(inventory)
     progress = check_checklist_progress(checklist_path)
-    checks_6_2 = run_section_6_2_checks(target_dir)
 
     report_output = {
         "step_1_general_discovery": inventory,
         "step_2_section_6_1_classification": classification,
         "step_3_checklist_state": progress,
         "step_4_section_6_2_triage": checks_6_2,
+        "initialized_files": initialized_files,
     }
 
     print(json.dumps(report_output, indent=2, ensure_ascii=False))
