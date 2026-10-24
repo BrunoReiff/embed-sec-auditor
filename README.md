@@ -187,6 +187,16 @@ python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py \
 
 This agent primarily performs static and configuration analysis (source code, build configs, manifests, and firmware artifacts). It complements—but does not replace—physical hardware penetration testing (e.g., live fault injection or side-channel oscilloscopes). Use only on projects and devices you are authorized to test.
 
-## 📚 Credits
+## 📚 Credits & Academic References
 
-Methodology built upon official OWASP projects: [OWASP ISTG](https://github.com/OWASP/owasp-istg), [OWASP Embedded Application Security](https://github.com/scriptingxss/embeddedappsec), and [OWASP FSTM](https://github.com/scriptingxss/owasp-fstm). See each submodule for its respective license.
+Methodology and inspection engines built upon and inspired by:
+
+- **Official OWASP Foundations:**
+  - [OWASP ISTG](https://github.com/OWASP/owasp-istg) — IoT Security Testing Guide (86 test cases).
+  - [OWASP Embedded Application Security](https://github.com/scriptingxss/embeddedappsec) — 10 embedded security domains & threat modeling.
+  - [OWASP FSTM](https://github.com/scriptingxss/owasp-fstm) — Firmware Security Testing Methodology (Stages 1 to 9).
+  - [OWASP ISVS](https://github.com/OWASP/IoT-Security-Verification-Standard-ISVS) — IoT Security Verification Standard.
+
+- **Key Architectural References & Inspirations:**
+  - **[FirmAgent (NDSS Symposium)](https://www.ndss-symposium.org/ndss-paper/firmagent-leveraging-fuzzing-to-assist-llm-agents-with-iot-firmware-vulnerability-discovery/):** *"Leveraging Fuzzing to Assist LLM Agents with IoT Firmware Vulnerability Discovery"* (Tsinghua University) — Inspired our intraprocedural **Source-to-Sink IoT Taint Correlation Engine** (`scripts/modules/taint_analyzer.py`), drastically reducing false positives by connecting external attack surfaces (MQTT, HTTP, UART, BLE, NVS) directly to dangerous memory and command sinks.
+  - **[IoTwizz (Kushal Mistry)](https://github.com/khushalmistry/IoTwizz):** Modular IoT Security Assessment Framework — Inspired our **Firmware Binary Shannon Entropy, Magic Signatures & Secret Strings Inspector** (`scripts/modules/firmware_inspector.py`) as well as our **Hardware & Debug Interface Lockdown Audit** for UART root shells, U-Boot bootloader interruption, JTAG exposure, and STM32 Flash Readout Protection.
