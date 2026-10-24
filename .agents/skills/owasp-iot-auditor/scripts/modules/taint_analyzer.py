@@ -155,3 +155,4 @@ def run_taint_analysis(target_dir: Path, inventory: dict) -> list:
             all_taint_findings.extend(findings)
 
     return all_taint_findings
+

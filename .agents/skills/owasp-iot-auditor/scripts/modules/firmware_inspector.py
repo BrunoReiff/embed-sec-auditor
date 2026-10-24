@@ -147,3 +147,4 @@ def inspect_firmware_binaries(target_dir: Path, inventory: dict) -> tuple:
         })
 
     return findings, telemetry
+
