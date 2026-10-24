@@ -1,6 +1,5 @@
 ---
 trigger: always_on
-description: Mandatory operational rules for the OWASP IoT & Embedded Security Auditor and Remediator Agent (Default English + Static HTML Single-Tab Output + 3 Invocation Modes)
 ---
 
 # Operational Rule — OWASP IoT & Embedded Security Auditor Agent
@@ -24,6 +23,8 @@ description: Mandatory operational rules for the OWASP IoT & Embedded Security A
      2. **Status Transitions & Checkbox Toggles (Modes 2 & 3):** When a vulnerability is re-tested and verified, the agent may move the `<tr>` row between tables (e.g. from `#tbody-fail` / `#tbody-partial` to `#tbody-pass`), toggle checkboxes to checked (`<input type="checkbox" checked>`) in `owasp_iot_remediation_plan.html`, append approved entries to `#tbody-resolved-history`, and update status badges in `owasp_iot_progress_checklist.html`.
      3. **Metadata & KPI Counts:** Update count numbers (`id="count-fail"`, etc.) and date strings.
    - **Zero structural HTML alterations are permitted.**
+4. **⚡ Zero Code-Reading Rule for CLI Execution:**
+   - **Never read `.py` files** inside `scripts/` or `scripts/modules/` to learn how to run `owasp_iot_scanner.py`. Use the inline flag table in `modes/mode_1_full_audit.md` or [`scanner_cli_reference.md`](../skills/owasp-iot-auditor/references/scanner_cli_reference.md).
 
 ---
 
@@ -34,12 +35,15 @@ When analyzing, auditing, re-verifying, or remediating vulnerabilities in any em
 ## Mode 1: Full / Incremental Project Audit (`Lead Security Auditor`)
 👉 **Dedicated Execution Manual:** [`modes/mode_1_full_audit.md`](../skills/owasp-iot-auditor/modes/mode_1_full_audit.md)
 
-When the user asks to audit a project, strictly follow the 5-step sequence in `modes/mode_1_full_audit.md`:
-1. **General Project Discovery:** Single-pass tree search via `python3 .../owasp_iot_scanner.py --target . --init-all`.
-2. **Functionality Classification (Section 6.1):** Classify across Categories 1 to 4.
-3. **State-Tracking Checklist:** Record and query real-time audit progress in `owasp_iot_progress_checklist.html`.
-4. **Sequential Test Execution (Section 6.2 Order):** Execute Modules 1 to 6 mandatorily recording exact `file:///path#Lxx-Lyy` references.
-5. **Fast-Path Static HTML Report (< 30s) + Linked Remediation Plan:** Single-batch anchor injection under the **Immutable HTML Skeleton Rule**.
+Mode 1 supports two execution profiles:
+- **Mode 1.1 — Standard Fast Audit:** Native single-pass tree search (`python3 .../owasp_iot_scanner.py --target . --init-all`) + deep LLM OWASP inspection across Modules 1–6.
+- **Mode 1.2 — Deep Hybrid Audit (`Full-Power SAST + OWASP`):** Triggered when the user asks for a *"Mode 1 Deep Audit"* / *"Full-Power Audit"* / *"Modo 1 Completo"*. Combines 100% of Mode 1.1 with the 6 external SAST/SCA/Binary tools (*Cppcheck*, *Gitleaks*, *Semgrep*, *Flawfinder*, *Checksec* + Python ELF inspector, *Trivy*):
+  1. **Step 0 (Mandatory Pre-Flight Tool Check):** Run `python3 .../owasp_iot_scanner.py --check-tools`. If any tool is missing, **pause and ask the user** if they want to install the missing tools now (**Option A:** `python3 .../owasp_iot_scanner.py --install-tools all`) or proceed with installed tools + native fallback (**Option B**).
+  2. **Step 1 (General Project Discovery & SAST Execution):** Run `python3 .../owasp_iot_scanner.py --target . --init-all --deep-scan` (or `--init-all` for Mode 1.1).
+  3. **Step 2 (Functionality Classification — Section 6.1):** Classify across Categories 1 to 4.
+  4. **Step 3 (State-Tracking Checklist):** Record and query real-time audit progress in `owasp_iot_progress_checklist.html`.
+  5. **Step 4 (Sequential Test Execution — Section 6.2 Order):** Execute Modules 1 to 6 mandatorily recording exact `file:///path#Lxx-Lyy` references and source tool badges.
+  6. **Step 5 (Fast-Path Static HTML Report < 30s + Linked Remediation Plan):** Single-batch anchor injection under the **Immutable HTML Skeleton Rule**.
 
 ---
 

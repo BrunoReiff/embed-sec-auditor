@@ -1,0 +1,72 @@
+rules:
+  - id: iot-unsafe-c-buffer-copy
+    patterns:
+      - pattern-either:
+          - pattern: strcpy($DST, $SRC)
+          - pattern: strcat($DST, $SRC)
+          - pattern: sprintf($DST, $FMT, ...)
+          - pattern: vsprintf($DST, $FMT, $ARGS)
+          - pattern: gets($DST)
+    message: "Unsafe C buffer operation without bounds checking (Stack/Heap Buffer Overflow risk)."
+    languages: [c, cpp]
+    severity: ERROR
+    metadata:
+      owasp_module: "Module_1_SAST_and_Memory"
+      owasp_id: "ISTG-FW-INPV-001 / EMB-APPSEC-01"
+      cwe: "CWE-120"
+
+  - id: iot-command-injection-exec
+    patterns:
+      - pattern-either:
+          - pattern: system($CMD)
+          - pattern: popen($CMD, $MODE)
+    message: "OS command execution call in embedded firmware/service (Command Injection risk)."
+    languages: [c, cpp]
+    severity: ERROR
+    metadata:
+      owasp_module: "Module_1_SAST_and_Memory"
+      owasp_id: "ISTG-FW-INPV-002 / EMB-APPSEC-02"
+      cwe: "CWE-78"
+
+  - id: iot-mbedtls-verify-none
+    pattern: mbedtls_ssl_conf_authmode($CONF, MBEDTLS_SSL_VERIFY_NONE)
+    message: "mbedTLS certificate verification is explicitly disabled (MBEDTLS_SSL_VERIFY_NONE), enabling MITM attacks."
+    languages: [c, cpp]
+    severity: ERROR
+    metadata:
+      owasp_module: "Module_2_Secrets_Identity_Cryptography"
+      owasp_id: "ISTG-FW-CRYPT-001 / EMB-APPSEC-08"
+      cwe: "CWE-295"
+
+  - id: iot-arduino-wifi-client-insecure
+    pattern: $CLIENT.setInsecure()
+    message: "TLS certificate validation disabled via setInsecure() on embedded WiFiClientSecure."
+    languages: [c, cpp]
+    severity: ERROR
+    metadata:
+      owasp_module: "Module_2_Secrets_Identity_Cryptography"
+      owasp_id: "ISTG-FW-CRYPT-001 / EMB-APPSEC-08"
+      cwe: "CWE-295"
+
+  - id: iot-nodejs-tls-reject-unauthorized-false
+    pattern: "{ rejectUnauthorized: false }"
+    message: "TLS certificate verification disabled in Node.js IoT backend/broker connection."
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      owasp_module: "Module_2_Secrets_Identity_Cryptography"
+      owasp_id: "ISTG-DES-CRYPT-001 / EMB-APPSEC-08"
+      cwe: "CWE-295"
+
+  - id: iot-mqtt-wildcard-subscription
+    patterns:
+      - pattern-either:
+          - pattern: $CLIENT.subscribe("#", ...)
+          - pattern: esp_mqtt_client_subscribe($CLIENT, "#", ...)
+    message: "Root wildcard '#' MQTT subscription violates least-privilege topic ACL segregation."
+    languages: [c, cpp, javascript, typescript, python]
+    severity: WARNING
+    metadata:
+      owasp_module: "Module_5_Data_Exchange_Services_Logic"
+      owasp_id: "ISTG-DES-AUTHZ-001 / EMB-APPSEC-11"
+      cwe: "CWE-285"

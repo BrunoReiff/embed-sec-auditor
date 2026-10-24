@@ -22,15 +22,27 @@ Supports ESP-IDF, Arduino, PlatformIO, FreeRTOS, Zephyr, Embedded Linux (Yocto/B
 ├── rules/
 │   └── owasp-iot-agent-rule.md       ← "always_on" rule (Default English + Static HTML + 3 Modes)
 └── skills/owasp-iot-auditor/
-    ├── SKILL.md                      ← Complete agent operational instructions
+    ├── SKILL.md                      ← Master skill router & operational overview
+    ├── modes/
+    │   ├── mode_1_full_audit.md      ← Mode 1.1 (Standard) & Mode 1.2 (Deep Hybrid SAST Audit)
+    │   ├── mode_2_targeted_verification.md ← Mode 2 (Strict Compliance Judge)
+    │   └── mode_3_targeted_remediation.md  ← Mode 3 (Surgical Remediator & Closed Loop)
     ├── references/
+    │   ├── scanner_cli_reference.md  ← Ultra-short CLI flag cheat sheet (zero code-reading)
+    │   ├── static_analysis_tools.md  ← External SAST/SCA/Binary catalog & Mode 1.2 architecture
     │   └── verification_rules.md     ← Technical inspection criteria & regexes per module
     ├── resources/
     │   ├── checklist_template.html   ← Static HTML state-tracking checklist (ISTG + EmbeddedAppSec + FSTM)
     │   ├── report_template.html      ← Static HTML "zero-scroll" compliance report template
-    │   └── remediation_tracker_template.html ← Static HTML remediation & re-test plan by OWASP ID
+    │   ├── remediation_tracker_template.html ← Static HTML remediation & re-test plan by OWASP ID
+    │   └── semgrep_iot_rules.yaml    ← Offline Semgrep AST security ruleset for IoT/Embedded
     └── scripts/
-        └── owasp_iot_scanner.py      ← Discovery & triage helper script (Cross-platform Python 3)
+        ├── owasp_iot_scanner.py      ← Lightweight Base CLI Router
+        └── modules/
+            ├── html_manager.py       ← Template init, safe anchor injection & Mode 2 locator
+            ├── native_scanner.py     ← Single-pass os.scandir discovery & Section 6.1/6.2 triage
+            ├── sast_orchestrator.py  ← Mode 1.2 runner (Cppcheck, Gitleaks, Semgrep, Flawfinder, Checksec, Trivy)
+            └── tool_installer.py     ← Pre-flight tool checker (--check-tools) & installer (--install-tools)
 IOT_OWASP/                            ← Upstream reference sources (git submodules of official OWASP repos)
 ├── embeddedappsec/
 ├── owasp-fstm/
@@ -59,11 +71,12 @@ Compatible with AI coding assistants that support the `.agents/` customization s
 
 ---
 
-## 🧭 Usage — The 3 Operational Modes
+## 🧭 Usage — Operational Modes
 
 | Mode | Purpose | Example Prompt |
 | :--- | :--- | :--- |
-| **Mode 1 — Full / Incremental Audit** | Map the entire project, run the 6 test modules, and generate the Static HTML Final Report + Linked Remediation Plan | *"Audit this project with the owasp-iot-auditor skill"* |
+| **Mode 1.1 — Standard Fast Audit** | Map the entire project using the native single-pass engine, run the 6 OWASP test modules, and generate the Static HTML Final Report + Linked Remediation Plan | *"Audit this project with the owasp-iot-auditor skill"* |
+| **Mode 1.2 — Deep Hybrid Audit (`Full-Power SAST`)** | Combine 100% of Mode 1.1 with **6 external SAST/SCA/Binary tools** (*Cppcheck*, *Gitleaks*, *Semgrep*, *Flawfinder*, *Checksec*, *Trivy*). Prompts to auto-install missing tools first (**Option A**) | ***"Run Mode 1 Deep Audit on this project"*** or ***"Execute Full-Power OWASP Audit"*** |
 | **Mode 2 — Targeted ID Verification** | Re-test specific OWASP IDs as a strict compliance judge | *"Verify ID `ISTG-FW-SCRT-003`"* or *"Re-test `EMB-APPSEC-01`"* |
 | **Mode 3 — Targeted ID Remediation** | Fix specific OWASP IDs with automated closed-loop verification | *"Remediate OWASP IDs `EMB-APPSEC-01` and `ISTG-DES-CRYPT-001`"* |
 
@@ -73,18 +86,19 @@ Compatible with AI coding assistants that support the `.agents/` customization s
 
 ## ⚙️ How the Agent Operates
 
-### Mode 1 — Full / Incremental Audit (5 Steps)
+### Mode 1 — Full / Incremental Audit (Mode 1.1 Standard & Mode 1.2 Deep Hybrid SAST)
 
-1. **General Project Discovery** — Inventories programming languages, RTOS/OS/SDKs, hardware interfaces, build systems, cryptographic libraries, and network/wireless protocols (assisted by `owasp_iot_scanner.py`).
+0. **Pre-Flight Tool Check & Interactive Installer (Mode 1.2 Exclusive)** — When **Mode 1.2 (`Deep Hybrid Audit`)** is requested, the agent first runs `--check-tools`. If any of the 6 external SAST tools (*Cppcheck*, *Gitleaks*, *Semgrep*, *Flawfinder*, *Checksec*, *Trivy*) are missing, the agent asks the user if they want to install them automatically (**Option A:** `--install-tools all`) before starting the scan.
+1. **General Project Discovery** — Inventories programming languages, RTOS/OS/SDKs, hardware interfaces, build systems, cryptographic libraries, and network/wireless protocols via `owasp_iot_scanner.py`.
 2. **Scope Classification (Section 6.1)** — Classifies the project across 4 functional categories (*Firmware/Embedded Code*, *Build System/Firmware Image*, *Backend/Broker/Data Services*, *Web/Mobile/User & Physical Interfaces*) and marks out-of-scope components as `N/A`.
 3. **State-Tracking HTML Checklist** — Initializes or resumes `owasp_iot_progress_checklist.html`, tracking **where the agent stopped and where it must go next** so large audits can be paused and resumed seamlessly.
-4. **Sequential Testing (Section 6.2)** — Executes 6 test modules in strict order, always recording the **exact file(s) and line number(s)** (`file:///path#L10-L20`) of every finding:
-   1. **Module 1:** Embedded SAST & Memory Quality (banned C/C++ functions, command/code injection, RAM hygiene, stack overflow)
-   2. **Module 2:** Secrets, Identity & Cryptography (hardcoded secrets, `.gitignore` rules, TLS/mTLS validation, secure storage, sessions & privacy)
-   3. **Module 3:** Build, Bootloader & Binary Hardening (compiler flags, Secure Boot, Flash Encryption, JTAG/UART lockdown, surface reduction)
-   4. **Module 4:** Firmware Update Lifecycle / OTA (`ISTG-FW[UPDT]` — authentication, asymmetric signatures, encrypted distribution, anti-rollback)
-   5. **Module 5:** Data Exchange Services & Business Logic (`ISTG-DES` — per-device auth, MQTT ACLs, anti-replay, rate limiting, LWT)
-   6. **Module 6:** SBOM & Third-Party Dependencies (pinned versions, CISA/ISVS minimum elements, CVE checks)
+4. **Sequential Testing (Section 6.2)** — Executes 6 test modules in strict order, always recording the **exact file(s) and line number(s)** (`file:///path#L10-L20`) and tool badge of every finding:
+   1. **Module 1:** Embedded SAST & Memory Quality *(Native + Cppcheck + Flawfinder + Semgrep)*
+   2. **Module 2:** Secrets, Identity & Cryptography *(Native + Gitleaks + Semgrep)*
+   3. **Module 3:** Build, Bootloader & Binary Hardening *(Native + Checksec / Pure-Python ELF Inspector + Cppcheck)*
+   4. **Module 4:** Firmware Update Lifecycle / OTA *(Native + Semgrep)*
+   5. **Module 5:** Data Exchange Services & Business Logic *(Native + Semgrep)*
+   6. **Module 6:** SBOM & Third-Party Dependencies *(Native + Trivy SCA)*
 5. **Single-Tab Static HTML Output (Report + Linked Remediation Plan)** — Generates cross-linked static HTML files in the audited project:
    - `owasp_iot_final_report.html` — **Zero-scroll** compliance report strictly grouped by status (**`FAIL` first**, then `PARTIAL`, `PASS`, and `N/A`), with a clickable quick-navigation dashboard at the top and a direct **🛠️ Open in Remediation Plan** link on every `FAIL`/`PARTIAL` row.
    - `owasp_iot_remediation_plan.html` — Linked directly from the report in the same browser tab; contains actionable task cards for every `FAIL` and `PARTIAL` item with exact file/line locations and one-click **Copy** buttons for Mode 3 commands, external developer prompts, and Mode 2 re-verification commands.
@@ -105,14 +119,22 @@ flowchart LR
 
 ---
 
-## 🔧 Helper Script (Optional Manual Execution)
+## 🔧 Helper Script CLI Router
 
 ```bash
-# Cross-platform (Linux / macOS / Windows with Python 3)
-python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <project_path> --init-checklist
-```
+# Mode 1.1 Standard Fast Native Audit
+python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <project_path> --init-all
 
-Use `--verify-id <OWASP_ID>` to quickly locate all occurrences of a specific ID across the tracking files during Mode 2 re-verification.
+# Mode 1.2 Pre-Flight Check & Auto-Installer
+python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --check-tools
+python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --install-tools all
+
+# Mode 1.2 Deep Hybrid Audit (Native + 6 External SAST Tools)
+python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <project_path> --init-all --deep-scan
+
+# Mode 2 Targeted ID Locator
+python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target <project_path> --verify-id <OWASP_ID>
+```
 
 ---
 
