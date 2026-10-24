@@ -149,3 +149,4 @@ def locate_verification_id(vid: str, remediation_path: Path, report_path: Path, 
             "and update the anchor rows and checkboxes without altering the HTML skeleton."
         ),
     }
+

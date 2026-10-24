@@ -7,3 +7,4 @@ Modules:
 - sast_orchestrator: Mode 1.2 external SAST/SCA/Binary execution and OWASP finding normalization.
 - tool_installer: External SAST tool readiness checker (--check-tools) and automated installer (--install-tools).
 """
+

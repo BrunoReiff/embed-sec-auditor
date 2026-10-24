@@ -395,3 +395,4 @@ def run_deep_sast_suite(target_dir: Path, inventory: dict, native_findings: dict
                 native_findings[mod_key].append(ext_item)
 
     return native_findings, telemetry
+

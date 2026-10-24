@@ -70,3 +70,4 @@ rules:
       owasp_module: "Module_5_Data_Exchange_Services_Logic"
       owasp_id: "ISTG-DES-AUTHZ-001 / EMB-APPSEC-11"
       cwe: "CWE-285"
+

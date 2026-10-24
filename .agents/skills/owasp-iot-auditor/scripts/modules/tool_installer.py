@@ -253,3 +253,4 @@ def install_missing_tools(requested: str = "all") -> dict:
         "installation_results": install_logs,
         "post_install_status": status_after,
     }
+

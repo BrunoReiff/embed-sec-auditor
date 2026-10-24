@@ -292,3 +292,4 @@ def classify_section_6_1(inventory: dict) -> dict:
             ),
         },
     }
+
