@@ -141,25 +141,28 @@ Classify the target project across the 4 categories of Section 6.1 to activate t
 
 #### Execution Sequence:
 
-1. **Module 1 — Embedded SAST & Memory Quality** *(Native + Cppcheck + Flawfinder + Semgrep)*
+1. **Module 1 — Embedded SAST & Memory Quality** *(Native + FirmAgent Taint + Cppcheck + Flawfinder + Semgrep)*
+   - FirmAgent Intraprocedural Taint Chains: Correlating IoT Input Sources (MQTT, HTTP, UART, BLE, NVS, JSON) directly to dangerous sinks (`strcpy`, `sprintf`, `system`, `popen`) in the same function scope.
    - Unsafe C/C++ buffer functions (`gets`, `strcpy`, `strcat`, `sprintf`, `vsprintf`, unbounded `scanf`), out-of-bounds access, null pointer dereference, memory leaks, use-after-free.
    - Command/Code Injection (`system`, `popen`, `exec*`, `eval`).
    - Buffer zeroization (`memset_s`, `mbedtls_platform_zeroize`), stack overflow detection, hardware watchdog.
    - *Target IDs:* `EMB-APPSEC-01/02`, `ISTG-*-INPV-001/002`.
 
-2. **Module 2 — Secrets, Identity & Cryptography (`SCRT`, `CRYPT`, `AUTHZ`)** *(Native + Gitleaks + Semgrep)*
-   - Hardcoded credentials, private keys (`.key`, `.pem`), API tokens in code or configs.
+2. **Module 2 — Secrets, Identity & Cryptography (`SCRT`, `CRYPT`, `AUTHZ`)** *(Native + Gitleaks + IoTwizz Binary Strings + Semgrep)*
+   - Hardcoded credentials, private keys (`.key`, `.pem`), API tokens in code, configs, or embedded in compiled `.bin`/`.img` binaries.
    - `.gitignore` protection blocking sensitive files.
    - TLS/mTLS validation (`MBEDTLS_SSL_VERIFY_REQUIRED`, `rejectUnauthorized: true`, CN/SAN check).
    - Weak crypto (MD5, SHA1, DES, RC4, ECB mode) and secure storage (NVS encryption, Flash Encryption).
    - *Target IDs:* `EMB-APPSEC-04/05/08/09`, `ISTG-*-SCRT-*`, `ISTG-*-CRYPT-*`.
 
-3. **Module 3 — Build, Bootloader & Binary Hardening (`INFO-004`, `CONF-002`)** *(Native + Checksec / ELF Inspector + Cppcheck)*
+3. **Module 3 — Build, Bootloader & Binary Hardening (`INFO-004`, `CONF-002`)** *(Native + Checksec / ELF Inspector + IoTwizz Firmware Inspector + Cppcheck)*
+   - Firmware image analysis (`.bin`, `.img`, `.hex`, `.uf2`): Shannon Entropy calculation (entropy $< 6.5$ flags missing Flash Encryption `ISTG-FW[INST]-CRYPT-002`) and magic filesystem/bootloader signature identification.
+   - Hardware & Debug Interface Lockdown: Unauthenticated serial console (`inittab` `/bin/sh`, `agetty --autologin`), U-Boot interactive boot delay (`CONFIG_BOOTDELAY > 0`), JTAG allowed in production (`CONFIG_SECURE_BOOT_ALLOW_JTAG=y`), and disabled STM32 Readout Protection (`OB_RDP_LEVEL_0`).
    - Compiler flags (`-fstack-protector-strong`, `-fPIE -pie`, `-Wl,-z,relro,-z,now`, `-D_FORTIFY_SOURCE=2`) and ELF binary mitigations (`NX`, `Canary`, `PIE`, `RELRO`).
    - Secure Boot & Flash Encryption configurations (`CONFIG_SECURE_BOOT_V2_ENABLED`, U-Boot `CONFIG_FIT_SIGNATURE`).
    - Attack surface reduction (removal of telnetd, ftpd, debug code, backdoors CWE-489).
    - Serial UART log leakage (`Serial.print*`, `printf`, `ESP_LOG*` dumping secrets/tokens).
-   - *Target IDs:* `EMB-APPSEC-06/07`, `ISTG-FW-INFO-004`, `ISTG-FW-CONF-002`, `ISTG-INT[UART]-*`.
+   - *Target IDs:* `EMB-APPSEC-06/07`, `ISTG-FW-INFO-004`, `ISTG-FW-CONF-002`, `ISTG-INT[UART]-*`, `ISTG-PHY-*`, `ISTG-FW[INST]-CRYPT-002`.
 
 4. **Module 4 — Firmware Update Lifecycle (`ISTG-FW[UPDT]`)** *(Native + Semgrep)*
    - Authentication/authorization for firmware updates (`ISTG-FW[UPDT]-AUTHZ-001`).

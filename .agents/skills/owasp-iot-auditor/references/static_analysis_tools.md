@@ -112,9 +112,29 @@ flowchart TD
 
 ---
 
+### 2.7. Binwalk & IoTwizz-Inspired Firmware Binary Inspector (`firmware_inspector.py`)
+* **Core Function:** Deep inspection of raw firmware binary images (`.bin`, `.img`, `.hex`, `.uf2`, `.squashfs`, `.jffs2`, `.ubifs`).
+* **Target Vulnerabilities:**
+  - **Missing Flash Encryption (`ISTG-FW[INST]-CRYPT-002`):** Pure-Python Shannon Entropy calculation ($0.0 - 8.0$ bits/byte). Images with entropy $< 6.5$ are flagged as unencrypted plaintext code.
+  - **Magic Signatures & Embedded Filesystems:** Detects SquashFS, JFFS2, CramFS, UBIFS, U-Boot `uImage`, ESP32 ROM headers (`0xE9`), and embedded certificates. Optional execution of `binwalk` CLI when installed.
+  - **Cleartext Secrets in Binaries (`ISTG-FW-SCRT-001/003`):** Scans compiled binaries for embedded passwords, Wi-Fi keys, `/etc/shadow` root password hashes, and telnet backdoor strings.
+* **OWASP Mapping:**
+  - *Module 3: Build, Bootloader & Binary Hardening* (`ISTG-FW[INST]-CRYPT-002`)
+  - *Module 2: Secrets, Identity & Cryptography* (`ISTG-FW-SCRT-001/003`)
+
+---
+
+### 2.8. FirmAgent-Inspired Intraprocedural Taint Analyzer (`taint_analyzer.py`)
+* **Core Function:** Correlates external IoT Input Sources (MQTT event payloads, HTTP request buffers, UART serial reads, BLE GATT writes, NVS/JSON parsers) with Dangerous Sinks (`strcpy`, `strcat`, `sprintf`, `vsprintf`, `gets`, `memcpy`, `system`, `popen`) inside the same function scope.
+* **Target Vulnerabilities:** Buffer overflows and command injections directly reachable from external network/serial attack surfaces (`EMB-APPSEC-01/02`, `ISTG-FW-INPV-001/002`), reducing false positives and emitting the full `Source (Line X) -> Sink (Line Y)` dataflow chain.
+* **OWASP Mapping:**
+  - *Module 1: Embedded SAST & Memory Quality* (`EMB-APPSEC-01/02`, `ISTG-*-INPV-001/002`)
+
+---
+
 ## 3. Comparison Matrix & Evaluation Summary
 
-| Tool | Core Domain | OWASP Module Focus | Execution Speed | Primary Output Format | Setup Overhead |
+| Tool / Module | Core Domain | OWASP Module Focus | Execution Speed | Primary Output Format | Setup Overhead |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Cppcheck** | Deep C/C++ AST/Flow SAST | Modules 1, 3 | 2 – 8 sec | Custom Template | Low (`winget`/`apt`/`brew`) |
 | **Gitleaks** | Secrets & Hardcoded Keys | Module 2 | < 2 sec | JSON | Very Low (`winget`/`apt`/`brew`) |
@@ -122,6 +142,8 @@ flowchart TD
 | **Flawfinder**| Lexical C/C++ Security Linter | Module 1 | < 1 sec | Structured Text | Very Low (`pip install flawfinder`) |
 | **Checksec** | ELF Binary Exploit Hardening | Module 3 (Binary) | < 1 sec | Built-in Python ELF + CLI | Zero (Built-in fallback) |
 | **Trivy** | Third-Party Dependencies (SCA) | Module 6 | 5 – 15 sec | JSON | Low (`winget`/`apt`/`brew`) |
+| **Binwalk / FW Inspector** | Firmware Entropy, Magic & Strings | Modules 2, 3 | < 2 sec | Pure-Python Engine + CLI | Zero (Built-in fallback) |
+| **FirmAgent Taint Engine** | Intraprocedural Source-to-Sink Chains | Module 1 | < 1 sec | Pure-Python Engine | Zero (Built-in) |
 
 ---
 
@@ -131,6 +153,8 @@ Instead of a single monolithic file, `owasp_iot_scanner.py` acts as a lightweigh
 
 - [`scripts/owasp_iot_scanner.py`](../scripts/owasp_iot_scanner.py): Base CLI entrypoint (`--check-tools`, `--install-tools`, `--deep-scan`, `--init-all`, `--inject-anchor`, `--verify-id`).
 - [`scripts/modules/tool_installer.py`](../scripts/modules/tool_installer.py): Detects installed tools (`--check-tools`) and auto-installs missing tools (`--install-tools all`).
-- [`scripts/modules/sast_orchestrator.py`](../scripts/modules/sast_orchestrator.py): Runs all 6 tools, parses their output, and normalizes/deduplicates findings into `step_4_section_6_2_triage`.
-- [`scripts/modules/native_scanner.py`](../scripts/modules/native_scanner.py): Single-pass `os.scandir` discovery, Section 6.1 classification, and native regex triage.
+- [`scripts/modules/sast_orchestrator.py`](../scripts/modules/sast_orchestrator.py): Runs external tools + `firmware_inspector`, normalizes and deduplicates findings into `step_4_section_6_2_triage`.
+- [`scripts/modules/taint_analyzer.py`](../scripts/modules/taint_analyzer.py): FirmAgent-inspired intraprocedural Source-to-Sink IoT taint analysis.
+- [`scripts/modules/firmware_inspector.py`](../scripts/modules/firmware_inspector.py): IoTwizz-inspired binary entropy analysis, magic header signatures, and cleartext string extraction.
+- [`scripts/modules/native_scanner.py`](../scripts/modules/native_scanner.py): Single-pass `os.scandir` discovery, Section 6.1 classification, and native regex triage with IoTwizz hardware lockdown checks.
 - [`scripts/modules/html_manager.py`](../scripts/modules/html_manager.py): Immutable HTML template initializer, anchor injector, and Mode 2 ID locator.

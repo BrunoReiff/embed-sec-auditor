@@ -21,6 +21,7 @@ from modules.html_manager import (
 )
 from modules.native_scanner import classify_section_6_1, scan_project_tree
 from modules.sast_orchestrator import run_deep_sast_suite
+from modules.taint_analyzer import run_taint_analysis
 from modules.tool_installer import check_all_tools, install_missing_tools
 
 
@@ -96,6 +97,14 @@ def main():
 
     # 5. Mode 1.1 (Native Audit) & Mode 1.2 (Deep Hybrid Audit) Dispatcher
     inventory, checks_6_2 = scan_project_tree(target_dir)
+
+    # FirmAgent-Inspired Intraprocedural Taint Analysis (Source-to-Sink Chains)
+    taint_findings = run_taint_analysis(target_dir, inventory)
+    for tf in taint_findings:
+        mod_key = tf.pop("module", "Module_1_SAST_and_Memory")
+        if mod_key in checks_6_2:
+            checks_6_2[mod_key].append(tf)
+
     classification = classify_section_6_1(inventory)
     progress = check_checklist_progress(checklist_path)
 

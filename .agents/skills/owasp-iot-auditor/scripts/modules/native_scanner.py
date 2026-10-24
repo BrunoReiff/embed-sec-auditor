@@ -18,8 +18,7 @@ IGNORE_DIRS = {
     ".vscode",
     ".idea",
     "__pycache__",
-    "dist",
-    "build",
+    "CMakeFiles",
     "IOT_OWASP",
     ".agents",
     ".agent",
@@ -80,6 +79,10 @@ def scan_project_tree(target_dir: Path):
         # Module 3
         ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-INT[UART]-INFO-002", "Serial log detected (verify if it leaks secrets/UIDs/tokens over UART)", re.compile(r"\b(Serial\.print|Serial\.println|Serial\.printf|ESP_LOG[IWDVE])\s*\([^)]*(?:pass|key|token|secret|uid|hash|pin)", re.I), {".c", ".cpp", ".h", ".hpp", ".ino"}),
         ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-FW-INFO-004 / EMB-APPSEC-06", "Compiler hardening or Secure Boot/Flash Encryption flag present", re.compile(r"(-fstack-protector|-fPIE|-D_FORTIFY_SOURCE|CONFIG_SECURE_BOOT|CONFIG_SECURE_FLASH_ENC|CONFIG_ENABLE_VBOOT|CONFIG_FIT_SIGNATURE)"), {".txt", ".ini", ".mk", ".cmake", ""}),
+        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-INT[UART]-AUTHN-001 / EMB-APPSEC-07", "Unauthenticated root serial console detected (IoTwizz Hardware Lockdown)", re.compile(r"(?:::respawn:-(?:/bin/sh|/bin/ash|/bin/bash)|agetty\s+.*--autologin\s+root)"), {".conf", ".inittab", ".service", ".sh", ""}),
+        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-INT[UART]-INFO-002", "U-Boot bootdelay allows serial bootloader console interruption (IoTwizz Bootloader Audit)", re.compile(r"\bCONFIG_BOOTDELAY\s*=\s*[1-9]\d*"), {".config", ".h", ".cfg", ""}),
+        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-PHY-002 / EMB-APPSEC-07", "STM32 Flash Readout Protection disabled (OB_RDP_LEVEL_0 - IoTwizz Hardware Audit)", re.compile(r"\bOB_RDP_LEVEL_0\b"), {".c", ".cpp", ".h"}),
+        ("Module_3_Hardening_Build_Bootloader_Binaries", "ISTG-PHY-002 / EMB-APPSEC-07", "JTAG debugging explicitly allowed in production build (IoTwizz Hardware Audit)", re.compile(r"\bCONFIG_SECURE_BOOT_ALLOW_JTAG\s*=\s*y\b"), {".txt", ".ini", ""}),
         # Module 4
         ("Module_4_Firmware_Update_OTA", "ISTG-FW[UPDT]-*", "Firmware update (OTA) routine or configuration detected", re.compile(r"\b(esp_https_ota|esp_ota_begin|ArduinoOTA|HTTPUpdate|Update\.begin|CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK)\b"), SOURCE_EXTS),
         # Module 5
@@ -103,6 +106,9 @@ def scan_project_tree(target_dir: Path):
                     rel_path = str(Path(entry.path).relative_to(target_dir))
                     ext = Path(entry.path).suffix.lower()
                     lower_name = name.lower()
+
+                    if ext in {".o", ".obj", ".d", ".a", ".map", ".ninja"}:
+                        continue
 
                     inventory["total_files_scanned"] += 1
                     inventory["files_by_ext"][ext] = inventory["files_by_ext"].get(ext, 0) + 1

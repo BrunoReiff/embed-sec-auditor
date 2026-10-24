@@ -96,6 +96,17 @@ TOOL_CATALOG = {
             "darwin": [["brew", "install", "trivy"]],
         },
     },
+    "binwalk": {
+        "display_name": "Binwalk (Firmware Image & Filesystem Extractor)",
+        "domain": "Firmware Image Analysis, Magic Signatures & Extraction (IoTwizz-Inspired)",
+        "owasp_modules": ["Module 3 (Firmware & Binary Hardening / FSTM Stages 2-4)"],
+        "win_fallback_paths": [],
+        "install_cmds": {
+            "windows": [[sys.executable, "-m", "pip", "install", "--upgrade", "binwalk"]],
+            "linux": [["sudo", "apt-get", "install", "-y", "binwalk"], [sys.executable, "-m", "pip", "install", "--upgrade", "binwalk"]],
+            "darwin": [["brew", "install", "binwalk"]],
+        },
+    },
 }
 
 
@@ -173,7 +184,7 @@ def check_all_tools() -> dict:
             "executable": exe_path or None,
             "domain": meta["domain"],
             "owasp_modules": meta["owasp_modules"],
-            "builtin_python_fallback": tool_key == "checksec",
+            "builtin_python_fallback": tool_key in {"checksec", "binwalk"},
             "recommended_install_commands": readable_cmds,
         }
 

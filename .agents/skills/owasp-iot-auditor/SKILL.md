@@ -76,7 +76,7 @@ When operating within any of the modes, consult these specialized assets strictl
 - **Surgical Regex & Acceptance Criteria:** [`references/verification_rules.md`](./references/verification_rules.md) (contains regular expressions and technical criteria for all 86 ISTG test cases and Embedded AppSec domains).
 - **Base CLI Router & Modular Scripts (`scripts/`):**
   - Base Router Entrypoint: [`scripts/owasp_iot_scanner.py`](./scripts/owasp_iot_scanner.py)
-  - Specialized Backend Modules: `scripts/modules/` (`html_manager.py`, `native_scanner.py`, `sast_orchestrator.py`, `tool_installer.py`)
+  - Specialized Backend Modules: `scripts/modules/` (`html_manager.py`, `native_scanner.py`, `sast_orchestrator.py`, `tool_installer.py`, `taint_analyzer.py`, `firmware_inspector.py`)
 - **Offline Semgrep IoT Ruleset & Static HTML Templates (`resources/`):**
   - Semgrep AST Ruleset: [`resources/semgrep_iot_rules.yaml`](./resources/semgrep_iot_rules.yaml)
   - Final Audit Report: [`resources/report_template.html`](./resources/report_template.html)

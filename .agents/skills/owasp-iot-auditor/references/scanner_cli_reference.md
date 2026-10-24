@@ -21,7 +21,7 @@ python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target .
 ## 2. Mode 1.2 — Deep Hybrid Audit (`Full-Power SAST + OWASP`)
 
 ### Step 0: Check Installed External SAST Tools (Mandatory Pre-Flight)
-Checks if *Cppcheck*, *Gitleaks*, *Semgrep*, *Flawfinder*, *Checksec*, and *Trivy* are installed on the host machine:
+Checks if *Cppcheck*, *Gitleaks*, *Semgrep*, *Flawfinder*, *Checksec*, *Trivy*, and *Binwalk* are installed on the host machine:
 ```bash
 python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --check-tools
 ```
@@ -33,11 +33,11 @@ If `--check-tools` reports missing tools, ask the user if they want to install t
 python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --install-tools all
 
 # Or install specific tools only:
-python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --install-tools flawfinder,semgrep,gitleaks
+python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --install-tools flawfinder,semgrep,gitleaks,binwalk
 ```
 
 ### Step 1: Run Full-Power Deep Hybrid Scan
-Executes 100% of the native OWASP scanner **PLUS** all 6 external SAST/SCA/Binary tools and merges/deduplicates findings into JSON:
+Executes 100% of the native OWASP scanner (including FirmAgent Source-to-Sink Taint Chains and IoTwizz Hardware Lockdown) **PLUS** external SAST tools and the IoTwizz Firmware Binary Inspector (.bin/.img entropy, magic signatures, cleartext secrets):
 ```bash
 python3 .agents/skills/owasp-iot-auditor/scripts/owasp_iot_scanner.py --target . --init-all --deep-scan
 ```

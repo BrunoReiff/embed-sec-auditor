@@ -40,8 +40,10 @@ Supports ESP-IDF, Arduino, PlatformIO, FreeRTOS, Zephyr, Embedded Linux (Yocto/B
         ├── owasp_iot_scanner.py      ← Lightweight Base CLI Router (~110 lines)
         └── modules/
             ├── html_manager.py       ← Template init, safe anchor injection & Mode 2 locator
-            ├── native_scanner.py     ← Single-pass os.scandir discovery & Section 6.1/6.2 triage
-            ├── sast_orchestrator.py  ← Mode 1.2 runner (Cppcheck, Gitleaks, Semgrep, Flawfinder, Checksec, Trivy)
+            ├── native_scanner.py     ← Single-pass os.scandir discovery, 6.1/6.2 triage & hardware lockdown
+            ├── taint_analyzer.py     ← FirmAgent-inspired Source-to-Sink IoT taint analysis
+            ├── firmware_inspector.py ← IoTwizz-inspired binary entropy, magic signatures & secret extraction
+            ├── sast_orchestrator.py  ← Mode 1.2 runner (Cppcheck, Gitleaks, Semgrep, Flawfinder, Checksec, Trivy, Binwalk)
             └── tool_installer.py     ← Pre-flight tool checker (--check-tools) & installer (--install-tools)
 IOT_OWASP/                            ← Upstream reference sources (git submodules of official OWASP repos)
 ├── embeddedappsec/
@@ -96,6 +98,8 @@ In **Mode 1.2 (Deep Hybrid Audit)**, the agent orchestrates 6 industry-standard 
 | **Flawfinder** | Lexical C/C++ Buffer Linter | Module 1 (`EMB-APPSEC-01/02`) | < 1 sec | Native regex scanner + LLM |
 | **Checksec** | ELF Binary Mitigations (`NX`, `Canary`, `PIE`, `RELRO`) | Module 3 (`ISTG-FW-INFO-004`) | < 1 sec | **Built-in Pure-Python ELF Parser** in `sast_orchestrator.py` |
 | **Trivy** | Software Composition Analysis (SCA) | Module 6 (`ISTG-*-CONF-001` SBOM/CVE) | 5 – 15 sec | Manifest dependency parser + LLM |
+| **Binwalk / FW Inspector** | Binary Entropy, Magic Signatures & Secret Strings | Modules 2 & 3 (`ISTG-FW[INST]-CRYPT-002`) | < 2 sec | **Built-in Pure-Python Engine** in `firmware_inspector.py` |
+| **FirmAgent Taint Engine** | Intraprocedural Source-to-Sink Taint Chains | Module 1 (`EMB-APPSEC-01/02`) | < 1 sec | **Built-in Pure-Python Engine** in `taint_analyzer.py` |
 
 ```mermaid
 flowchart TD

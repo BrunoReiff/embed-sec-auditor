@@ -18,6 +18,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+from .firmware_inspector import inspect_firmware_binaries
 from .tool_installer import resolve_tool_executable
 
 
@@ -379,6 +380,10 @@ def run_deep_sast_suite(target_dir: Path, inventory: dict, native_findings: dict
     f_trv, t_trv = run_trivy(target_dir)
     telemetry["trivy"] = t_trv
     all_external.extend(f_trv)
+
+    f_fw, t_fw = inspect_firmware_binaries(target_dir, inventory)
+    telemetry["firmware_inspector"] = t_fw
+    all_external.extend(f_fw)
 
     # Merge and deduplicate by (module, file, line, source_tool, id)
     seen = set()

@@ -71,3 +71,28 @@ rules:
       owasp_id: "ISTG-DES-AUTHZ-001 / EMB-APPSEC-11"
       cwe: "CWE-285"
 
+  - id: iot-firmagent-taint-mqtt-payload-sink
+    patterns:
+      - pattern-either:
+          - pattern: strcpy($DST, (char *)$EVENT->data)
+          - pattern: sprintf($DST, $FMT, ..., $EVENT->data, ...)
+          - pattern: memcpy($DST, $EVENT->data, $EVENT->data_len)
+    message: "FirmAgent Taint Pattern: External MQTT event data copied directly into memory sink without bounds verification."
+    languages: [c, cpp]
+    severity: ERROR
+    metadata:
+      owasp_module: "Module_1_SAST_and_Memory"
+      owasp_id: "ISTG-FW-INPV-001 / EMB-APPSEC-01"
+      cwe: "CWE-120"
+
+  - id: iot-stm32-rdp-level-0-disabled
+    pattern: OB_RDP_LEVEL_0
+    message: "IoTwizz Hardware Lockdown: STM32 Flash Readout Protection explicitly configured to LEVEL_0 (Protection Disabled), allowing JTAG/SWD firmware readout."
+    languages: [c, cpp]
+    severity: ERROR
+    metadata:
+      owasp_module: "Module_3_Hardening_Build_Bootloader_Binaries"
+      owasp_id: "ISTG-PHY-002 / EMB-APPSEC-07"
+      cwe: "CWE-1299"
+
+

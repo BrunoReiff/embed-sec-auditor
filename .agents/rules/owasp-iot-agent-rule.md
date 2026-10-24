@@ -37,7 +37,7 @@ When analyzing, auditing, re-verifying, or remediating vulnerabilities in any em
 
 Mode 1 supports two execution profiles:
 - **Mode 1.1 — Standard Fast Audit:** Native single-pass tree search (`python3 .../owasp_iot_scanner.py --target . --init-all`) + deep LLM OWASP inspection across Modules 1–6.
-- **Mode 1.2 — Deep Hybrid Audit (`Full-Power SAST + OWASP`):** Triggered when the user asks for a *"Mode 1 Deep Audit"* / *"Full-Power Audit"* / *"Modo 1 Completo"*. Combines 100% of Mode 1.1 with the 6 external SAST/SCA/Binary tools (*Cppcheck*, *Gitleaks*, *Semgrep*, *Flawfinder*, *Checksec* + Python ELF inspector, *Trivy*):
+- **Mode 1.2 — Deep Hybrid Audit (`Full-Power SAST + OWASP`):** Triggered when the user asks for a *"Mode 1 Deep Audit"* / *"Full-Power Audit"* / *"Modo 1 Completo"*. Combines 100% of Mode 1.1 (including FirmAgent Source-to-Sink Taint Chains and IoTwizz Hardware Lockdown) with the external SAST/SCA/Binary suite (*Cppcheck*, *Gitleaks*, *Semgrep*, *Flawfinder*, *Checksec* + Python ELF inspector, *Trivy*, and *Binwalk* + IoTwizz Firmware Binary Entropy/Magic Inspector):
   1. **Step 0 (Mandatory Pre-Flight Tool Check):** Run `python3 .../owasp_iot_scanner.py --check-tools`. If any tool is missing, **pause and ask the user** if they want to install the missing tools now (**Option A:** `python3 .../owasp_iot_scanner.py --install-tools all`) or proceed with installed tools + native fallback (**Option B**).
   2. **Step 1 (General Project Discovery & SAST Execution):** Run `python3 .../owasp_iot_scanner.py --target . --init-all --deep-scan` (or `--init-all` for Mode 1.1).
   3. **Step 2 (Functionality Classification — Section 6.1):** Classify across Categories 1 to 4.
